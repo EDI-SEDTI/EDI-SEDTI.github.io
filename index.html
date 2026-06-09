@@ -25,6 +25,9 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 .logo{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:900;color:#fff;letter-spacing:-.02em}
 .logo em{font-style:normal;color:#60a5fa}
 .hbadge{background:#1a56db22;border:1px solid #3b82f680;color:#93c5fd;font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:4px 13px;border-radius:99px}
+.header-links{display:flex;align-items:center;gap:24px;}
+.header-link{color:#93c5fd;text-decoration:none;font-size:0.85rem;font-weight:700;letter-spacing:0.05em;transition:color 0.2s;display:flex;align-items:center;gap:6px;}
+.header-link:hover{color:#fff;}
 
 /* ── HERO ── */
 .hero{
@@ -218,7 +221,12 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 
 <header class="site-header">
   <div class="logo">Inclusive<em>Docs</em></div>
-  <div class="hbadge" id="navBadge">Home</div>
+  <div class="header-links">
+    <a href="https://app.notion.com/p/Guidelines-for-Equity-Diversity-and-Inclusion-EDI-at-the-School-of-Engineering-Design-and-Teachi-126ae76873b7826ba267815384c41ce0?source=copy_link" target="_blank" rel="noopener" class="header-link">
+      📖 EDI Guidelines
+    </a>
+    <div class="hbadge" id="navBadge">Home</div>
+  </div>
 </header>
 
 <div class="hero">
