@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privilege based progress tracker</title>
+    <style>
+        :root {
+            --primary: #c2185b; 
+            --primary-hover: #ad144b;
+            --secondary: #4a148c; 
+            --bg-overlay: rgba(15, 23, 42, 0.75);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-dark: #0f172a;
+            --text-light: #f8fafc;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #0f172a;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            transition: background-image 0.5s ease-in-out;
+        }
+
+        /* Top Progress/Dashboard Header */
+        .header-dashboard {
+            background: rgba(15, 23, 42, 0.9);
+            color: var(--text-light);
+            padding: 12px 20px;
+            backdrop-filter: blur(10px);
+            border-bottom: 3px solid var(--primary);
+            z-index: 10;
+            display: none; /* Hidden until game starts */
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .calendar-tag {
+            background: var(--primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* Tracker Lanes */
+        .track-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        @media (max-width: 1024px) { .track-container { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 768px) { .track-container { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 480px) { .track-container { grid-template-columns: 1fr; } }
+
+        .mini-lane {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 6px 12px;
+            border-radius: 6px;
+            position: relative;
+        }
+
+        .mini-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            margin-right: 8px;
+            border: 1px solid var(--text-light);
+        }
+
+        .lane-info {
+            flex-grow: 1;
+            font-size: 11px;
+        }
+
+        .btn-about {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 5px;
+            transition: background 0.2s;
+            padding: 0;
+        }
+        .btn-about:hover { background: var(--primary); }
+
+        .progress-bar-bg {
+            background: rgba(255,255,255,0.2);
+            height: 6px;
+            border-radius: 3px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            background: var(--primary);
+            height: 100%;
+            width: 0%;
+            transition: width 0.8s ease-in-out;
+        }
+
+        /* Main Story Scene Area */
+        .story-container {
+            flex-grow: 1;
+            display: none; /* Hidden until game starts */
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.8) 100%);
+        }
+
+        .character-stage {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            width: 100%;
+            max-width: 800px;
+            height: 50vh;
+            position: absolute;
+            bottom: 180px;
+            z-index: 1;
+        }
+
+        .character-portrait {
+            width: 220px;
+            height: 100%;
+            background-size: contain;
+            background-position: bottom center;
+            background-repeat: no-repeat;
+            transition: all 0.5s ease;
+            opacity: 0.3;
+            transform: scale(0.9);
+            filter: grayscale(80%);
+        }
+        .character-portrait.active {
+            opacity: 1;
+            transform: scale(1.05);
+            filter: grayscale(0%);
+            z-index: 2;
+        }
+
+        .speech-bubble {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 650px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 5;
+            margin-bottom: 15px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+        }
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: var(--card-bg) transparent;
+            display: block;
+            width: 0;
+        }
+
+        .speaker-name {
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--secondary);
+            font-size: 14px;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
+        }
+
+        .story-text {
+            font-size: 16px;
+            line-height: 1.4;
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .action-panel {
+            width: 100%;
+            max-width: 650px;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn-story {
+            width: 100%;
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--text-light);
+            background: linear-gradient(135deg, var(--primary), #ad144b);
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(194, 24, 91, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .btn-story:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(194, 24, 91, 0.6);
+            background: linear-gradient(135deg, #d81b60, var(--primary));
+        }
+        .btn-story.secondary {
+            background: linear-gradient(135deg, var(--secondary), #6a1b9a);
+            box-shadow: 0 4px 10px rgba(74, 20, 140, 0.4);
+        }
+        .btn-story.secondary:hover {
+            background: linear-gradient(135deg, #8e24aa, var(--secondary));
+            box-shadow: 0 6px 14px rgba(74, 20, 140, 0.6);
+        }
+
+        /* Modals */
+        .modal-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-overlay);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 100;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            padding: 35px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border-top: 8px solid var(--primary);
+            position: relative;
+        }
+        .modal-content h2 { margin-bottom: 15px; color: var(--secondary); }
+        .modal-content p { margin-bottom: 25px; font-size: 16px; color: #475569; }
+
+        .about-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            margin: 0 auto 15px;
+            border: 3px solid var(--primary);
+        }
+        .about-meta {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .env-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        @media (max-width: 600px) { .env-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <!-- Environment Selection Screen -->
+    <div class="modal-screen" id="env-screen">
+        <div class="modal-content">
+            <h2>Select Your Domain</h2>
+            <p>Systemic tracking speeds apply across all institutions. Choose where you want to execute your policy routing:</p>
+            <div class="env-grid">
+                <button class="btn-story secondary" onclick="selectEnvironment('work')">🏢 Corporate Workplace</button>
+                <button class="btn-story secondary" onclick="selectEnvironment('university')">🎓 University Campus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rule Explanation Screen -->
+    <div class="modal-screen" id="start-screen" style="display: none;">
+        <div class="modal-content">
+            <h2>The System Blueprint</h2>
+            <p>You are not a character in this story. <strong>You are the System.</strong> Your structural choices control equity paths. While base speeds drift naturally from structural advantages, your strategic policy routing can correct generational trajectories.</p>
+            <button class="btn-story" onclick="startGame()">Initialize Simulation</button>
+        </div>
+    </div>
+
+    <!-- Upper Control Metric Board -->
+    <header class="header-dashboard" id="main-header">
+        <div class="header-top">
+            <h3 style="font-weight: 700; font-size: 16px; letter-spacing: 0.5px;">SYSTEM PRIVILEGE TRACKER</h3>
+            <div class="calendar-tag" id="calendar-display">MONTH: START</div>
+        </div>
+        <div class="track-container" id="lanes-root">
+            <!-- Programmatically Injected Tracker Tracks -->
+        </div>
+    </header>
+
+    <!-- Visual Novel Stage Area -->
+    <main class="story-container" id="main-story">
+        <div class="character-stage" id="stage">
+            <div class="character-portrait" id="portrait-left"></div>
+        </div>
+
+        <div class="speech-bubble">
+            <div class="speaker-name" id="speaker-lbl">SYSTEM OVERSEER</div>
+            <p class="story-text" id="story-lbl">Welcome to the machine...</p>
+        </div>
+
+        <div class="action-panel" id="actions-root">
+            <!-- Action Choices -->
+        </div>
+    </main>
+
+    <!-- Character Profile Modal -->
+    <div class="modal-screen" id="about-screen" style="display: none;">
+        <div class="modal-content">
+            <div class="about-avatar" id="about-img"></div>
+            <h2 id="about-name">Character Name</h2>
+            <div class="about-meta" id="about-base-speed">Base Speed: Normal</div>
+            <p id="about-desc">Character background story goes here.</p>
+            <button class="btn-story secondary" onclick="closeAbout()">Return to Story</button>
+        </div>
+    </div>
+
+    <!-- Final Outcome Overlay -->
+    <div class="modal-screen" id="end-screen" style="display: none;">
+        <div class="modal-content">
+            <h2>Timeline Complete</h2>
+            <p id="end-analysis"></p>
+            <p style="font-style: italic; font-size: 14px; background: #f1f5f9; padding: 12px; border-radius: 8px;">
+                <strong>EDI Reality Check:</strong> Individual inclusive actions prevent active regression, but deep equity requires refactoring the foundational architecture.
+            </p>
+            <button class="btn-story" style="margin-top:15px;" onclick="location.reload()">Reboot Simulation</button>
+        </div>
+    </div>
+
+    <script>
+        // Character Roster
+        const players = [
+            { id: 0, name: 'Liam', desc: 'Generational Wealth', pos: 0, speed: 6, img: 'images/liam.png', bio: 'Liam benefits from inherited financial networks, safety nets, and implicit social biases. His "Base Speed" is naturally higher because systemic wind currents push him forward even when doing routine, baseline output.' },
+            { id: 1, name: 'Mei', desc: 'Neurodivergent', pos: 0, speed: 3, img: 'images/mei.png', bio: 'Mei is an exceptionally skilled individual who processes information differently. Traditional architecture—like open noisy environments, ambiguous social events, and rigid schedules—imposes heavy executive functioning tax on Mei.' },
+            { id: 2, name: 'Raj', desc: 'Chronic Pain', pos: 0, speed: 3, img: 'images/raj.png', bio: 'Raj manages severe chronic discomfort daily. Physical demands, prolonged formatting environments, and rigid layouts sap physical reserves, penalizing him unless explicitly accommodated.' },
+            { id: 3, name: 'Chloe', desc: 'Single Parent', pos: 0, speed: 3, img: 'images/chloe.png', bio: 'Chloe single-handedly balances a full workload with household obligations. Lacking multi-person home safety nets, sudden childcare provider or health variables instantly jeopardize her pacing.' },
+            { id: 4, name: 'Maya', desc: 'Wheelchair User', pos: 0, speed: 3, img: 'images/maya.png', bio: 'Maya faces consistent physical hurdles navigating spaces built primarily for able-bodied personnel. Hidden access points, poor designs, and travel complications force her to burn energy merely arriving.' },
+            { id: 5, name: 'Tariq', desc: 'ESL / Immigrant', pos: 0, speed: 3, img: 'images/tariq.png', bio: 'Tariq brings deep international expertise, but must constantly contend with systemic assumptions, credential discounting, and cultural friction elements that minimize his input.' },
+            { id: 6, name: 'Arthur', desc: 'Older Generation', pos: 0, speed: 3, img: 'images/arthur.png', bio: 'Arthur possesses decades of deep knowledge. However, he regularly faces subtle ageism; systemic assumptions about his adaptability and technological literacy create friction.' }
+        ];
+
+        // --- CORPORATE TIMELINE ---
+        const workScenarios = [
+            { month: "Scenario 1", speaker: "Mei", subjectId: 1, text: "The high-volume open framework floor is giving me immense sensory overload. I can't filter out the noise to focus.", optA: { text: "Establish targeted acoustic safe pods.", speed: 8, msg: "Mei finishes tasks in an optimized environment. (+8 Progress)" }, optB: { text: "Enforce open-air shared workspace layout.", speed: -5, msg: "Sensory burnout forces Mei behind deadlines. (-5 Progress)" } },
+            { month: "Scenario 2", speaker: "Raj", subjectId: 2, text: "My back pain flare-up makes sitting unbearable today. My ergonomic workspace equipment adjustment is buried in HR tickets.", optA: { text: "Bypass standard queues; procure chair immediately.", speed: 9, msg: "Raj stays focused and performs comfortably. (+9 Progress)" }, optB: { text: "Instruct compliance with regular ticket routing.", speed: -6, msg: "Severe workspace discomfort impairs productivity. (-6 Progress)" } },
+            { month: "Scenario 3", speaker: "Maya", subjectId: 4, text: "The priority briefing room is up flights of stairs, and the access elevator requires a badge manager code I don't have.", optA: { text: "Provide direct access codes & audit routing paths.", speed: 8, msg: "Maya checks in confidently and delivers. (+8 Progress)" }, optB: { text: "Advise waiting outside for team summary notes.", speed: -7, msg: "Exclusion damages presentation output. (-7 Progress)" } },
+            { month: "Scenario 4", speaker: "Liam", subjectId: 0, text: "My uncle plays tennis with the Executive VP. He offered to recommend me for the private director tier track directly.", optA: { text: "Enforce rigorous blind application tracking.", speed: 3, msg: "Liam passes structural check milestones normally. (+3 Progress)" }, optB: { text: "Allow internal connection referral velocity bypass.", speed: 15, msg: "Liam leverages deep privilege channels straight to the top. (+15 Progress)" } },
+            { month: "Scenario 5", speaker: "Chloe", subjectId: 3, text: "Emergency clinic closures mean I have zero child care coverage for the mid-week milestone launch. Can I coordinate shifts remotely?", optA: { text: "Approve custom asynchronous delivery blocks.", speed: 7, msg: "Chloe finishes tasks perfectly from home overnight. (+7 Progress)" }, optB: { text: "Demand mandatory on-site check-in compliance.", speed: -8, msg: "Chloe covers emergencies on unpaid leave. (-8 Progress)" } },
+            { month: "Scenario 6", speaker: "Tariq", subjectId: 5, text: "A project manager completely dismissed my strategic framework pitch, making a microaggressive comment about my accent.", optA: { text: "Intervene immediately and reinstate Tariq's presentation.", speed: 8, msg: "Tariq delivers effectively and gets project ownership. (+8 Progress)" }, optB: { text: "Let it pass to keep the meeting brief.", speed: -6, msg: "Tariq withdraws ideas from subsequent meetings. (-6 Progress)" } },
+            { month: "Scenario 7", speaker: "Arthur", subjectId: 6, text: "The company is rolling out new project management software. My manager assumed I wouldn't understand it and left me off the pilot training list.", optA: { text: "Mandate inclusive training access and value Arthur's feedback.", speed: 8, msg: "Arthur masters the system and optimizes the workflow. (+8 Progress)" }, optB: { text: "Focus pilot training only on the 'digital native' younger staff.", speed: -6, msg: "Arthur is locked out of the new workflow. (-6 Progress)" } },
+            { month: "Scenario 8", speaker: "Raj", subjectId: 2, text: "The physical team travel event requires a 6-hour flight block. Sitting that long will compromise my pain management plan.", optA: { text: "Convert tracking parameters to localized virtual alternatives.", speed: 7, msg: "Raj owns regional presentation items seamlessly. (+7 Progress)" }, optB: { text: "Flag travel attendance as mandatory for promotion.", speed: -8, msg: "Raj takes a physical crisis penalty. (-8 Progress)" } },
+            { month: "Scenario 9", speaker: "Chloe", subjectId: 3, text: "The mandatory client review runs past 7 PM. After-hours care costs double, wiping out my budget for the week.", optA: { text: "Reimburse evening care expenses via systemic stipends.", speed: 8, msg: "Chloe wraps up the deal safely. (+8 Progress)" }, optB: { text: "Advise that personal overhead is an individual issue.", speed: -7, msg: "Financial stress lowers delivery speed. (-7 Progress)" } },
+            { month: "Scenario 10", speaker: "Tariq", subjectId: 5, text: "The regional cross-border system requires local certifications that do not recognize my extensive international credentials.", optA: { text: "Fund credential cross-mapping acceleration courses.", speed: 8, msg: "Tariq integrates high-level expertise safely. (+8 Progress)" }, optB: { text: "Require entry-level re-testing cycles.", speed: -6, msg: "Redundant barriers freeze career trajectory. (-6 Progress)" } }
+        ];
+
+        // --- UNIVERSITY TIMELINE ---
+        const uniScenarios = [
+            { month: "Scenario 1", speaker: "Mei", subjectId: 1, text: "The library's group study floor is chaotic and loud. I can't filter the sensory input to focus on coding my assignment.", optA: { text: "Implement an accessible, private sensory-friendly study room booking system.", speed: 8, msg: "Mei secures a quiet space and aces the assignment. (+8 Progress)" }, optB: { text: "Tell her to wear headphones or study off-campus.", speed: -5, msg: "Sensory burnout causes Mei to miss the deadline. (-5 Progress)" } },
+            { month: "Scenario 2", speaker: "Raj", subjectId: 2, text: "My back-to-back seminars are across a massive, hilly campus with only a 10-minute gap. The physical toll is destroying my pain baseline.", optA: { text: "Allow remote attendance/hybrid options for mobility constraints.", speed: 9, msg: "Raj attends virtually, preserving his health and grades. (+9 Progress)" }, optB: { text: "Enforce strict physical attendance grading rubrics.", speed: -6, msg: "Raj's pain flares up, forcing him to skip classes entirely. (-6 Progress)" } },
+            { month: "Scenario 3", speaker: "Maya", subjectId: 4, text: "The mandatory chemistry lab is in the old heritage building. There are steps to enter and the lab benches are far too high for my chair.", optA: { text: "Relocate the lab section to an accessible building with proper benches.", speed: 8, msg: "Maya fully participates in the experiments safely. (+8 Progress)" }, optB: { text: "Tell her to just partner up and copy her partner's notes.", speed: -7, msg: "Maya is robbed of practical experience, hurting her exam prep. (-7 Progress)" } },
+            { month: "Scenario 4", speaker: "Liam", subjectId: 0, text: "My parents hired an expensive private alumni tutor who gave me the professor's old exams to study from.", optA: { text: "Mandate professors release old exams publicly to standardize study materials.", speed: 3, msg: "Liam still passes, but the structural advantage is equalized. (+3 Progress)" }, optB: { text: "Allow private networking and hidden resources to flourish.", speed: 15, msg: "Liam scores highest in the class via exclusive prep materials. (+15 Progress)" } },
+            { month: "Scenario 5", speaker: "Chloe", subjectId: 3, text: "The professor scheduled mandatory exam review sessions at 8 PM. My daycare closes at 6 PM.", optA: { text: "Provide high-quality recorded sessions and asynchronous participation credit.", speed: 7, msg: "Chloe watches after her child sleeps and masters the material. (+7 Progress)" }, optB: { text: "Dock participation grades for students who cannot attend in-person.", speed: -8, msg: "Chloe loses points and misses crucial review info. (-8 Progress)" } },
+            { month: "Scenario 6", speaker: "Tariq", subjectId: 5, text: "The essay prompt uses dense local cultural slang and idioms I don't understand, rather than focusing on the academic concepts.", optA: { text: "Audit exams to ensure questions test subject knowledge, not cultural fluency.", speed: 8, msg: "Tariq understands the prompt and writes a brilliant essay. (+8 Progress)" }, optB: { text: "Tell him he needs to read more local literature to 'fit in'.", speed: -6, msg: "Tariq misinterprets the prompt and loses heavy marks. (-6 Progress)" } },
+            { month: "Scenario 7", speaker: "Arthur", subjectId: 6, text: "The Teaching Assistant assumed I didn't know how to use the online submission portal because of my age, and patronized me in front of the class.", optA: { text: "Correct the TA's bias and treat Arthur as a respected peer.", speed: 8, msg: "Arthur feels respected and continues engaging in class discussions. (+8 Progress)" }, optB: { text: "Let the TA over-explain basic computer functions.", speed: -6, msg: "Arthur feels humiliated and stops participating in the course. (-6 Progress)" } },
+            { month: "Scenario 8", speaker: "Raj", subjectId: 2, text: "The lecture hall only has tiny, rigid plastic desk-chairs. Three hours in one will cause a massive pain flare-up.", optA: { text: "Install ergonomic, accessible seating in all lecture halls.", speed: 7, msg: "Raj can focus on the lecture instead of his physical pain. (+7 Progress)" }, optB: { text: "Tell him to bring a cushion from home.", speed: -8, msg: "The seating triggers a flare-up, disrupting his study week. (-8 Progress)" } },
+            { month: "Scenario 9", speaker: "Chloe", subjectId: 3, text: "My group project members refuse to meet via Zoom and demand late-night, in-person library meetings I cannot attend.", optA: { text: "Mandate flexible/hybrid group work contracts and peer evaluations.", speed: 8, msg: "The group accommodates Chloe, and they deliver a great project. (+8 Progress)" }, optB: { text: "Let the group penalize Chloe on the peer evaluation form.", speed: -7, msg: "Chloe is unfairly graded down despite doing her share of the work. (-7 Progress)" } },
+            { month: "Scenario 10", speaker: "Tariq", subjectId: 5, text: "International student fees just spiked again without warning, forcing me to take a third part-time job just to afford tuition.", optA: { text: "Implement tuition freezes and robust international bursary programs.", speed: 8, msg: "Tariq can afford to drop a job and focus on his final exams. (+8 Progress)" }, optB: { text: "Let market rates dictate international tuition fees.", speed: -6, msg: "Tariq is exhausted from working and his grades plummet. (-6 Progress)" } }
+        ];
+
+        let activeTimeline = [];
+        let executionIndex = 0;
+
+        function selectEnvironment(env) {
+            document.getElementById('env-screen').style.display = 'none';
+            document.getElementById('start-screen').style.display = 'flex';
+            
+            if (env === 'work') {
+                document.body.style.backgroundImage = "url('images/office_background.jpg')";
+                activeTimeline = workScenarios;
+            } else {
+                document.body.style.backgroundImage = "url('images/university_background.jpg')";
+                activeTimeline = uniScenarios;
+            }
+        }
+
+        function initTrackerUI() {
+            const root = document.getElementById('lanes-root');
+            root.innerHTML = '';
+            players.forEach(p => {
+                root.innerHTML += `
+                    <div class="mini-lane">
+                        <div class="mini-avatar" style="background-image: url('${p.img}')"></div>
+                        <div class="lane-info">
+                            <div style="display:flex; justify-content:space-between; font-weight:600;">
+                                <span>
+                                    ${p.name} 
+                                    <button class="btn-about" onclick="openAbout(${p.id})" title="About ${p.name}">ⓘ</button>
+                                </span>
+                                <span id="val-${p.id}">0%</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" id="fill-${p.id}"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openAbout(id) {
+            const p = players[id];
+            document.getElementById('about-img').style.backgroundImage = `url('${p.img}')`;
+            document.getElementById('about-name').innerText = p.name;
+            document.getElementById('about-base-speed').innerText = `Baseline Tracking Speed: ${p.speed === 6 ? 'Fast (Privileged Tailwind)' : 'Slow (Structural Friction)'}`;
+            document.getElementById('about-desc').innerHTML = `<strong>Context:</strong> ${p.desc}<br><br>${p.bio}`;
+            document.getElementById('about-screen').style.display = 'flex';
+        }
+
+        function closeAbout() { document.getElementById('about-screen').style.display = 'none'; }
+        document.getElementById('about-screen').addEventListener('click', function(e) { if (e.target === this) closeAbout(); });
+
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('main-header').style.display = 'block';
+            document.getElementById('main-story').style.display = 'flex';
+            initTrackerUI();
+            renderNode();
+        }
+
+        function renderNode() {
+            if (executionIndex >= activeTimeline.length) {
+                endGame();
+                return;
+            }
+
+            players.forEach(p => { p.pos = Math.min(100, p.pos + p.speed); });
+            updateMetrics();
+
+            const node = activeTimeline[executionIndex];
+            document.getElementById('calendar-display').innerText = `TIMELINE: ${node.month}`;
+            document.getElementById('speaker-lbl').innerText = `${node.speaker} (${findPlayer(node.speaker).desc})`;
+            document.getElementById('story-lbl').innerText = `"${node.text}"`;
+
+            const targetPlayer = players[node.subjectId];
+            const portrait = document.getElementById('portrait-left');
+            portrait.style.backgroundImage = `url('${targetPlayer.img}')`;
+            portrait.classList.add('active');
+
+            const actionRoot = document.getElementById('actions-root');
+            actionRoot.innerHTML = `
+                <button class="btn-story" onclick="resolveBranch('A')">Route Policy A: ${node.optA.text}</button>
+                <button class="btn-story secondary" onclick="resolveBranch('B')">Route Policy B: ${node.optB.text}</button>
+            `;
+        }
+
+        function resolveBranch(selection) {
+            const node = activeTimeline[executionIndex];
+            const activeChoice = selection === 'A' ? node.optA : node.optB;
+            const targetPlayer = players[node.subjectId];
+
+            targetPlayer.pos = Math.max(0, Math.min(100, targetPlayer.pos + activeChoice.speed));
+            updateMetrics();
+
+            document.getElementById('portrait-left').classList.remove('active');
+            document.getElementById('speaker-lbl').innerText = "SYSTEM FEEDBACK SUMMARY";
+            document.getElementById('story-lbl').innerText = activeChoice.msg;
+
+            document.getElementById('actions-root').innerHTML = `
+                <button class="btn-story" onclick="advanceStep()">Advance Architecture Timeline ➡️</button>
+            `;
+        }
+
+        function advanceStep() {
+            executionIndex++;
+            renderNode();
+        }
+
+        function updateMetrics() {
+            players.forEach(p => {
+                document.getElementById(`fill-${p.id}`).style.width = `${p.pos}%`;
+                document.getElementById(`val-${p.id}`).innerText = `${p.pos}%`;
+            });
+        }
+
+        function findPlayer(name) { return players.find(p => p.name === name); }
+
+        function endGame() {
+            document.getElementById('end-screen').style.display = 'flex';
+            let sorted = [...players].sort((a,b) => b.pos - a.pos);
+            let evaluation = `<strong>Simulation Results:</strong><br><br>`;
+            sorted.forEach((p, idx) => {
+                evaluation += `${idx + 1}. <strong>${p.name}</strong> completed at <strong>${p.pos}%</strong> velocity.<br>`;
+            });
+            evaluation += `<br>Notice how even under equitable choice configurations, Liam remains structurally highly competitive due to baseline systemic momentum parameters.`;
+            document.getElementById('end-analysis').innerHTML = evaluation;
+        }
+    </script>
+</body>
+</html>

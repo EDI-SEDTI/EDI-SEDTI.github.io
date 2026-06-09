@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privilege Walk - Column Race</title>
+  
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0d0d0d;
+      color: #f0f0f0;
+      font-family: 'Georgia', serif;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.15); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes spin { 
+      0% { transform: rotate(0deg); } 
+      100% { transform: rotate(360deg); } 
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    // ─── Storage Adapter (Local Multiplayer Sync) ───────────────────────────
+    window.storage = {
+      get: async (key) => {
+        const val = localStorage.getItem(key);
+        return val ? { value: val } : null;
+      },
+      set: async (key, value) => {
+        localStorage.setItem(key, value);
+      },
+      delete: async (key) => {
+        localStorage.removeItem(key);
+      }
+    };
+  </script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useRef } = React;
+
+    // ─── Constants ───────────────────────────────────────────────────────────────
+    const QUESTIONS = [
+      { id: 1, text: "If one or both of your parents graduated from college, take one step forward.", dir: 1 },
+      { id: 2, text: "If you ever attended a private school or summer camps growing up, take one step forward.", dir: 1 },
+      { id: 3, text: "If you were told by your parents that you were beautiful, smart, or successful, take one step forward.", dir: 1 },
+      { id: 4, text: "If you knew since you were a child that it was expected of you to go to college, take one step forward.", dir: 1 },
+      { id: 5, text: "If you have immediate family members who are doctors, lawyers, or work in any degree-required profession, take one step forward.", dir: 1 },
+      { id: 6, text: "If you studied the history and culture of your ethnic ancestors in elementary and secondary school, take one step forward.", dir: 1 },
+      { id: 7, text: "If you grew up with people of color or working class people who were servants, maids, gardeners, or babysitters in your home, take one step forward.", dir: 1 },
+      { id: 8, text: "If you or your family never had to move due to financial inabilities, take one step forward.", dir: 1 },
+      { id: 9, text: "If you almost always see members of your race, sexual orientation, religion, and class widely represented in media in a positive manner, take one step forward.", dir: 1 },
+      { id: 10, text: "If you were to walk into a business and asked to speak to the person 'in charge' you would see a person of your race, take one step forward.", dir: 1 },
+      { id: 11, text: "If school and work is not in session during the major holidays or cultural events that you celebrate, take one step forward.", dir: 1 },
+      { id: 12, text: "If you feel that people do not interpret your personal opinions as a representation of your entire race, take one step forward.", dir: 1 },
+      { id: 13, text: "If you almost always feel comfortable with people knowing your sexual orientation, take one step forward.", dir: 1 },
+      { id: 14, text: "If you feel certain that you will not be followed, harassed, or watched under close surveillance while shopping, take one step forward.", dir: 1 },
+      { id: 15, text: "If walking alone at night, you never have to worry about anyone feeling threatened because of your presence, take one step forward.", dir: 1 },
+      { id: 16, text: "If you are going to be the first person in your immediate family to graduate from college, take one step back.", dir: -1 },
+      { id: 17, text: "If started school speaking a language other than English, take one step back.", dir: -1 },
+      { id: 18, text: "If you have ever been the only person of your race/ethnicity in a classroom or place of work, take one step back.", dir: -1 },
+      { id: 19, text: "If you grew up in an economically-disadvantaged or single-parent home, take one step back.", dir: -1 },
+      { id: 20, text: "If you were ever discouraged from any personal goal or dream because of your race, class, gender, orientation, or disability, take one step back.", dir: -1 },
+      { id: 21, text: "If you have ever had to sacrifice personal interests for the responsibility of others or circumstances, take one step back.", dir: -1 },
+      { id: 22, text: "If you have ever been called names regarding your race, class, gender, orientation, or disability and felt uncomfortable, take one step back.", dir: -1 },
+      { id: 23, text: "If you or someone you know has ever been mistrusted or accused of lying, stealing, or cheating without sufficient evidence, take one step back.", dir: -1 },
+      { id: 24, text: "If you were ashamed or embarrassed of your clothes, house, or car and wished to change it to avoid being judged or teased, take one step back.", dir: -1 },
+      { id: 25, text: "If you have ever been hesitant to speak to avoid being ridiculed because of your accent or speech impediment, take one step back.", dir: -1 },
+      { id: 26, text: "If you have been mistreated or served less fairly in a place of business because of your race or ethnicity, take one step back.", dir: -1 },
+      { id: 27, text: "If you never worry about crime, drugs, rape, or any other violence threats in your neighborhood, take one step forward.", dir: 1 },
+      { id: 28, text: "If you have ever skipped a meal or went away hungry because there was not enough money to buy food, take one step back.", dir: -1 },
+      { id: 29, text: "If anyone in your immediate family has ever served time in a state or federal penitentiary, take one step back.", dir: -1 },
+      { id: 30, text: "If anyone in your immediate family has ever been addicted to drugs or alcohol, take one step back.", dir: -1 },
+    ];
+
+    const PLAYER_COLORS = ["#e63946","#457b9d","#2a9d8f","#e9c46a","#f4a261","#a8dadc","#c77dff","#06d6a0"];
+    const ANON_LABELS = ["Shadow","Ghost","Phantom","Specter","Echo","Wraith","Mist","Veil"];
+
+    // ─── Game Logic Helpers ──────────────────────────────────────────────────────
+    function getRole(logicalPos) {
+      if (logicalPos <= 0) return { name: "Pawn", icon: "♟", desc: "You can only move one step forward. Your path is heavily constrained by the board." };
+      if (logicalPos <= 3) return { name: "Knight", icon: "♞", desc: "You can leap over obstacles. You have newfound flexibility and alternate routes." };
+      if (logicalPos <= 6) return { name: "Bishop", icon: "♝", desc: "You move freely on diagonals. Your perspective and reach across the board broadens." };
+      if (logicalPos <= 9) return { name: "Rook", icon: "♜", desc: "You command straight, powerful lines of influence. Your presence is fortified." };
+      if (logicalPos <= 12) return { name: "Queen", icon: "♛", desc: "You possess ultimate mobility. The board is open, and society yields to your moves." };
+      return { name: "King", icon: "♚", desc: "You are the center of the game. The entire system is built to protect and revolve around you." };
+    }
+
+    function getPlayerPos(answers, upToQ) {
+      let pos = 0;
+      for (let i = 0; i <= upToQ; i++) {
+        if (answers && answers[i] !== undefined) {
+          pos += answers[i] ? QUESTIONS[i].dir : 0;
+        }
+      }
+      return pos;
+    }
+
+    function getCompletedQs(players) {
+      const playerList = Object.values(players);
+      if (playerList.length === 0) return 0;
+      
+      let completed = 0;
+      for (let q = 0; q < QUESTIONS.length; q++) {
+        if (playerList.every(p => p.answers && p.answers[q] !== undefined)) {
+          completed = q + 1;
+        } else {
+          break;
+        }
+      }
+      return completed;
+    }
+
+    // ─── Storage wrappers (Room Based) ───────────────────────────────────────────
+    async function loadState(code) {
+      if (!code) return null;
+      try { const r = await window.storage.get(`pw_room_${code}`); return r ? JSON.parse(r.value) : null; } 
+      catch { return null; }
+    }
+    async function saveState(code, state) {
+      if (!code) return;
+      try { await window.storage.set(`pw_room_${code}`, JSON.stringify(state)); } 
+      catch(e) {}
+    }
+
+    // ─── Components ──────────────────────────────────────────────────────────────
+
+    function Avatar({ skin, hair, hairStyle, hairTexture, facialHair = 'none', eyes, eyeShape, lipShape, hat, accessory, accessoryColor = '#111111', size = 40 }) {
+      let hairBackgroundObj = { backgroundColor: hair };
+      if (hairTexture === 'wavy') {
+        hairBackgroundObj = {
+          backgroundColor: hair,
+          backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.15) 4px, rgba(0,0,0,0.15) 8px)`
+        };
+      } else if (hairTexture === 'curly') {
+        hairBackgroundObj = {
+          backgroundColor: hair,
+          backgroundImage: `radial-gradient(circle, rgba(0,0,0,0.2) 20%, transparent 20%)`,
+          backgroundSize: '10px 10px'
+        };
+      }
+
+      const eyeStyleMap = {
+        round: { borderRadius: '50%', height: '15%', width: '15%' },
+        narrow: { borderRadius: '50%', height: '5%', width: '15%', top: '50%' },
+        wide: { borderRadius: '50%', height: '15%', width: '22%' }
+      };
+      
+      const lipStyleMap = {
+        smile: { borderBottom: '2px solid #333', borderRadius: '0 0 50px 50px', height: '10%', width: '30%', top: '70%', left: '35%' },
+        frown: { borderTop: '2px solid #333', borderRadius: '50px 50px 0 0', height: '10%', width: '30%', top: '75%', left: '35%' },
+        neutral: { borderBottom: '2px solid #333', borderRadius: '0', height: '0', width: '20%', top: '75%', left: '40%' }
+      };
+
+      const eStyle = eyeStyleMap[eyeShape || 'round'];
+      const lStyle = lipStyleMap[lipShape || 'smile'];
+
+      return (
+        <div style={{
+          width: size, height: size, backgroundColor: skin, borderRadius: '50%',
+          position: 'relative', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.2)',
+          boxShadow: '0 2px 5px rgba(0,0,0,0.5)', flexShrink: 0
+        }}>
+          
+          {hairStyle !== 'bald' && (
+            <>
+              <div style={{ 
+                ...hairBackgroundObj, 
+                width: '100%', 
+                height: hairStyle === 'spiky' ? '40%' : '35%', 
+                position: 'absolute', 
+                top: 0,
+                clipPath: hairStyle === 'spiky' ? 'polygon(0% 100%, 10% 0%, 20% 100%, 30% 0%, 40% 100%, 50% 0%, 60% 100%, 70% 0%, 80% 100%, 90% 0%, 100% 100%)' : 'none'
+              }}></div>
+              
+              {hairStyle === 'long' && (
+                <>
+                  <div style={{ ...hairBackgroundObj, width: '25%', height: '80%', position: 'absolute', top: '10%', left: 0 }}></div>
+                  <div style={{ ...hairBackgroundObj, width: '25%', height: '80%', position: 'absolute', top: '10%', right: 0 }}></div>
+                </>
+              )}
+
+              {hairStyle === 'bob' && (
+                <>
+                  <div style={{ ...hairBackgroundObj, width: '25%', height: '60%', position: 'absolute', top: '10%', left: 0, borderRadius: '0 0 20px 0' }}></div>
+                  <div style={{ ...hairBackgroundObj, width: '25%', height: '60%', position: 'absolute', top: '10%', right: 0, borderRadius: '0 0 0 20px' }}></div>
+                </>
+              )}
+            </>
+          )}
+
+          {/* Facial Hair (Rendered behind lips, masking center to create 'U' shapes) */}
+          {facialHair === 'beard' && (
+            <div style={{ position: 'absolute', bottom: 0, left: '10%', width: '80%', height: '45%', backgroundColor: hair, borderRadius: '0 0 50px 50px' }}>
+              <div style={{ position: 'absolute', top: '-10%', left: '20%', width: '60%', height: '60%', backgroundColor: skin, borderRadius: '0 0 50px 50px' }}></div>
+            </div>
+          )}
+          {facialHair === 'goatee' && (
+            <div style={{ position: 'absolute', bottom: '5%', left: '40%', width: '20%', height: '20%', backgroundColor: hair, borderRadius: '0 0 20px 20px' }}>
+              <div style={{ position: 'absolute', top: '-10%', left: '25%', width: '50%', height: '50%', backgroundColor: skin, borderRadius: '0 0 10px 10px' }}></div>
+            </div>
+          )}
+          {facialHair === 'mustache' && (
+            <div style={{ position: 'absolute', top: '65%', left: '35%', width: '30%', height: '10%', backgroundColor: hair, borderRadius: '50px 50px 0 0' }}></div>
+          )}
+          
+          <div style={{ backgroundColor: eyes, position: 'absolute', top: '45%', left: '25%', ...eStyle }}></div>
+          <div style={{ backgroundColor: eyes, position: 'absolute', top: '45%', right: '25%', ...eStyle }}></div>
+          
+          <div style={{ position: 'absolute', ...lStyle }}></div>
+
+          {accessory === 'glasses' && (
+            <div style={{ position: 'absolute', top: '40%', left: '15%', width: '70%', height: '25%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ width: '40%', height: '100%', border: `2px solid ${accessoryColor}`, borderRadius: '50%' }}></div>
+              <div style={{ width: '20%', height: '2px', backgroundColor: accessoryColor }}></div>
+              <div style={{ width: '40%', height: '100%', border: `2px solid ${accessoryColor}`, borderRadius: '50%' }}></div>
+            </div>
+          )}
+          {accessory === 'mask' && (
+            <div style={{ position: 'absolute', top: '65%', left: '20%', width: '60%', height: '35%', backgroundColor: accessoryColor, borderRadius: '10px 10px 50px 50px', border: '1px solid rgba(0,0,0,0.2)' }}></div>
+          )}
+
+          {hat === 'cap' && (
+            <div style={{ background: '#e63946', width: '100%', height: '30%', position: 'absolute', top: 0, borderRadius: '50% 50% 0 0' }}>
+              <div style={{ background: '#e63946', width: '40%', height: '30%', position: 'absolute', right: '-5px', bottom: 0, borderRadius: '0 10px 10px 0' }} />
+            </div>
+          )}
+          {hat === 'beanie' && (
+            <div style={{ background: '#2a9d8f', width: '100%', height: '40%', position: 'absolute', top: 0, borderRadius: '50% 50% 10px 10px' }}></div>
+          )}
+          {hat === 'crown' && (
+            <div style={{ 
+              background: 'linear-gradient(135deg, #f4a261, #e9c46a)', 
+              width: '100%', height: '35%', position: 'absolute', top: 0, 
+              clipPath: 'polygon(0% 0%, 25% 100%, 50% 0%, 75% 100%, 100% 0%, 100% 100%, 0% 100%)'
+            }}></div>
+          )}
+        </div>
+      );
+    }
+
+    // ─── Main Application ───────────────────────────────────────────────────────────
+    function PrivilegeWalkColumn() {
+      const [phase, setPhase] = useState("join"); 
+      const [roomCode, setRoomCode] = useState(null);
+      const [pendingHost, setPendingHost] = useState(false);
+      const [gameState, setGameState] = useState(null);
+      const [myId, setMyId] = useState(null);
+      const [displayQ, setDisplayQ] = useState(0);
+      const [isRevealing, setIsRevealing] = useState(false);
+      
+      const pollRef = useRef(null);
+      const revealTimerRef = useRef(null);
+      const currentRoomCode = useRef(roomCode); 
+
+      useEffect(() => { currentRoomCode.current = roomCode; }, [roomCode]);
+
+      const uid = useCallback(() => Math.random().toString(36).slice(2, 9), []);
+      const generateRoomCode = () => Math.random().toString(36).substring(2, 6).toUpperCase();
+
+      const poll = useCallback(async () => {
+        const rCode = currentRoomCode.current;
+        if (!rCode) return;
+        
+        const state = await loadState(rCode);
+        if (!state) return;
+        setGameState(state);
+
+        if (phase === "lobby" && state.phase === "game") {
+          setPhase("game");
+          setDisplayQ(0);
+        }
+
+        if (state.phase === "game") {
+          const fullyAnswered = getCompletedQs(state.players);
+          
+          if (fullyAnswered > displayQ && !isRevealing) {
+            setIsRevealing(true);
+            
+            if (fullyAnswered >= QUESTIONS.length) {
+              revealTimerRef.current = setTimeout(() => {
+                setPhase("results");
+                setIsRevealing(false);
+              }, 4500);
+            } else {
+              revealTimerRef.current = setTimeout(() => {
+                setDisplayQ(fullyAnswered);
+                setIsRevealing(false);
+              }, 4500);
+            }
+          }
+        }
+      }, [phase, displayQ, isRevealing]);
+
+      useEffect(() => {
+        pollRef.current = setInterval(poll, 1000);
+        return () => clearInterval(pollRef.current);
+      }, [poll]);
+
+      const initHost = async () => {
+        const newCode = generateRoomCode();
+        setRoomCode(newCode);
+        setPendingHost(true);
+        await saveState(newCode, { phase: "lobby", players: {}, lobbyStart: Date.now() });
+        setPhase("customize");
+      };
+
+      const initJoin = () => {
+        setPhase("join_code");
+      };
+
+      const attemptJoin = async (enteredCode) => {
+        const code = enteredCode.toUpperCase();
+        const state = await loadState(code);
+        if (!state) {
+          alert("Room not found. Check the code and try again.");
+          return;
+        }
+        if (state.phase !== "lobby") {
+          alert("This game has already started or finished.");
+          return;
+        }
+        setRoomCode(code);
+        setPendingHost(false);
+        setPhase("customize");
+      };
+
+      const finalizeJoin = async (avatarData) => {
+        const id = uid();
+        setMyId(id);
+
+        let state = await loadState(roomCode);
+        if (!state) {
+          state = { phase: "lobby", players: {}, lobbyStart: Date.now() };
+        }
+
+        const playerCount = Object.keys(state.players).length;
+        const colorIdx = playerCount % PLAYER_COLORS.length;
+        const colIdx = playerCount; 
+
+        state.players[id] = { colorIdx, colIdx, avatar: avatarData, answers: {}, joinedAt: Date.now() };
+        await saveState(roomCode, state);
+        setGameState(state);
+        setPhase("lobby");
+      };
+
+      const startGame = async () => {
+        const state = await loadState(roomCode);
+        if (!state) return;
+        state.phase = "game";
+        await saveState(roomCode, state);
+        setPhase("game");
+        setDisplayQ(0);
+      };
+
+      const handleAnswer = async (didStep) => {
+        const freshState = await loadState(roomCode);
+        if (!freshState || !freshState.players[myId]) return;
+
+        freshState.players[myId].answers[displayQ] = didStep;
+        await saveState(roomCode, freshState);
+        setGameState(freshState); 
+      };
+
+      if (phase === "join") return <JoinScreen onHost={initHost} onJoin={initJoin} />;
+      if (phase === "join_code") return <JoinCodeScreen onAttemptJoin={attemptJoin} onBack={() => setPhase("join")} />;
+      if (phase === "customize") return <CustomizeScreen onSave={finalizeJoin} roomCode={roomCode} isHost={pendingHost} />;
+      if (phase === "lobby") return <LobbyScreen gameState={gameState} myId={myId} roomCode={roomCode} onStart={startGame} />;
+      if (phase === "game") return (
+        <GameScreen
+          gameState={gameState}
+          myId={myId}
+          displayQ={displayQ}
+          isRevealing={isRevealing}
+          onAnswer={handleAnswer}
+        />
+      );
+      if (phase === "results") return <ResultsScreen gameState={gameState} myId={myId} roomCode={roomCode} />;
+      return null;
+    }
+
+    // ─── Screens ─────────────────────────────────────────────────────────────────
+
+    function JoinScreen({ onHost, onJoin }) {
+      return (
+        <div style={styles.centerPage}>
+          <div style={styles.card}>
+            <div style={styles.titleIcon}>♚</div>
+            <h1 style={styles.title}>Privilege Walk</h1>
+            <p style={styles.subtitle}>An anonymous reflection. We all start as Pawns.</p>
+            <p style={{ color: "#aaa", textAlign: "center", marginBottom: "2rem", fontSize: "0.95rem", lineHeight: 1.5 }}>
+            Step into the Privilege Walk.
+            Answer honestly, move forward, and watch how different life experiences shape each player’s path.            </p>
+            <div style={styles.btnRow}>
+              <button style={{...styles.btn, ...styles.btnPrimary}} onClick={onHost}>Create New Room</button>
+              <button style={{...styles.btn, ...styles.btnSecondary}} onClick={onJoin}>Join Existing Room</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function JoinCodeScreen({ onAttemptJoin, onBack }) {
+      const [code, setCode] = useState("");
+      return (
+        <div style={styles.centerPage}>
+          <div style={styles.card}>
+            <h2 style={{color: "#fff", textAlign: "center", marginBottom: "1rem"}}>Enter Room Code</h2>
+            <input 
+              style={styles.input} 
+              value={code} 
+              onChange={e => setCode(e.target.value.toUpperCase())} 
+              placeholder="e.g. A7X2"
+              maxLength={6}
+            />
+            <div style={{...styles.btnRow, marginTop: "2rem"}}>
+              <button style={{...styles.btn, ...styles.btnPrimary}} onClick={() => onAttemptJoin(code)}>Join Room</button>
+              <button style={{...styles.btn, ...styles.btnSecondary}} onClick={onBack}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function CustomizeScreen({ onSave, roomCode, isHost }) {
+      const SKIN_COLORS = ["#8d5524", "#c68642", "#e0ac69", "#f1c27d", "#ffdbac"];
+      // Grey and White added to the end of HAIR_COLORS
+      const HAIR_COLORS = ["#090806", "#4A2711", "#A56B46", "#F0C858", "#E63946", "#C77DFF", "#555555", "#E0E0E0", "#F5F5F5"];
+      const EYE_COLORS = ["#634e34", "#2e536f", "#3d671d", "#1c7847", "#497665", "#000000"];
+      const ACCESSORY_COLORS = ["#111111", "#ffffff", "#e63946", "#2a9d8f", "#e9c46a", "#c77dff"];
+      
+      const HAIR_STYLES = ["short", "long", "bob", "spiky", "bald"];
+      const HAIR_TEXTURES = ["straight", "wavy", "curly"];
+      const FACIAL_HAIR_STYLES = ["none", "mustache", "beard", "goatee"];
+      const EYE_SHAPES = ["round", "narrow", "wide"];
+      const LIP_SHAPES = ["smile", "neutral", "frown"];
+      const HATS = ["none", "cap", "beanie", "crown"];
+      const ACCESSORIES = ["none", "glasses", "mask"];
+
+      const [skin, setSkin] = useState(SKIN_COLORS[3]);
+      const [hair, setHair] = useState(HAIR_COLORS[0]);
+      const [hairStyle, setHairStyle] = useState(HAIR_STYLES[0]);
+      const [hairTexture, setHairTexture] = useState(HAIR_TEXTURES[0]);
+      const [facialHair, setFacialHair] = useState(FACIAL_HAIR_STYLES[0]);
+      const [eyes, setEyes] = useState(EYE_COLORS[0]);
+      const [eyeShape, setEyeShape] = useState(EYE_SHAPES[0]);
+      const [lipShape, setLipShape] = useState(LIP_SHAPES[0]);
+      const [hat, setHat] = useState(HATS[0]);
+      const [accessory, setAccessory] = useState(ACCESSORIES[0]);
+      const [accessoryColor, setAccessoryColor] = useState(ACCESSORY_COLORS[0]);
+
+      return (
+        <div style={styles.centerPage}>
+          <div style={{...styles.card, maxWidth: "750px", padding: "1.5rem"}}>
+            {isHost && (
+              <div style={{textAlign:"center", marginBottom:"1rem"}}>
+                <span style={{color:"#aaa", fontSize:"0.9rem"}}>You are creating room: </span>
+                <span style={{color:"#e9c46a", fontWeight:"bold", fontSize:"1.2rem", letterSpacing:"2px"}}>{roomCode}</span>
+              </div>
+            )}
+            <h2 style={{color: "#fff", textAlign: "center", margin: "0 0 1.5rem 0"}}>Customize Avatar</h2>
+            
+            <div style={{display: 'flex', justifyContent: 'center', marginBottom: "1.5rem"}}>
+              <Avatar skin={skin} hair={hair} hairStyle={hairStyle} hairTexture={hairTexture} facialHair={facialHair} eyes={eyes} eyeShape={eyeShape} lipShape={lipShape} hat={hat} accessory={accessory} accessoryColor={accessoryColor} size={120} />
+            </div>
+
+            <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem"}}>
+              <div style={styles.pickerSection}>
+                <p style={styles.pickerLabel}>Skin Color</p>
+                <div style={styles.colorPickerRow}>
+                  {SKIN_COLORS.map(c => (<div key={c} onClick={() => setSkin(c)} style={{...styles.colorSwatch, backgroundColor: c, ...(skin === c ? styles.colorSwatchSelected : {})}} />))}
+                </div>
+                <p style={styles.pickerLabel}>Hair Color</p>
+                <div style={styles.colorPickerRow}>
+                  {HAIR_COLORS.map(c => (<div key={c} onClick={() => setHair(c)} style={{...styles.colorSwatch, backgroundColor: c, border: c === "#F5F5F5" ? "1px solid #ddd" : "2px solid transparent", ...(hair === c ? styles.colorSwatchSelected : {})}} />))}
+                </div>
+                <p style={styles.pickerLabel}>Eye Color</p>
+                <div style={styles.colorPickerRow}>
+                  {EYE_COLORS.map(c => (<div key={c} onClick={() => setEyes(c)} style={{...styles.colorSwatch, backgroundColor: c, ...(eyes === c ? styles.colorSwatchSelected : {})}} />))}
+                </div>
+                <p style={styles.pickerLabel}>Accessory Color</p>
+                <div style={styles.colorPickerRow}>
+                  {ACCESSORY_COLORS.map(c => (<div key={c} onClick={() => setAccessoryColor(c)} style={{...styles.colorSwatch, backgroundColor: c, border: c === "#ffffff" ? "1px solid #ddd" : "2px solid transparent", ...(accessoryColor === c ? styles.colorSwatchSelected : {})}} />))}
+                </div>
+              </div>
+
+              <div style={styles.pickerSection}>
+                <p style={styles.pickerLabel}>Features & Hair</p>
+                <div style={{display: "flex", gap: "0.5rem"}}>
+                  <select style={styles.selectBox} value={hairStyle} onChange={e => setHairStyle(e.target.value)}>
+                    {HAIR_STYLES.map(s => <option key={s} value={s}>Cut: {s}</option>)}
+                  </select>
+                  <select style={styles.selectBox} value={hairTexture} onChange={e => setHairTexture(e.target.value)}>
+                    {HAIR_TEXTURES.map(s => <option key={s} value={s}>Tex: {s}</option>)}
+                  </select>
+                </div>
+                <div style={{display: "flex", gap: "0.5rem"}}>
+                  <select style={styles.selectBox} value={eyeShape} onChange={e => setEyeShape(e.target.value)}>
+                    {EYE_SHAPES.map(s => <option key={s} value={s}>Eyes: {s}</option>)}
+                  </select>
+                  <select style={styles.selectBox} value={lipShape} onChange={e => setLipShape(e.target.value)}>
+                    {LIP_SHAPES.map(s => <option key={s} value={s}>Mouth: {s}</option>)}
+                  </select>
+                </div>
+                <div style={{display: "flex", gap: "0.5rem"}}>
+                  <select style={styles.selectBox} value={hat} onChange={e => setHat(e.target.value)}>
+                    {HATS.map(s => <option key={s} value={s}>Hat: {s}</option>)}
+                  </select>
+                  <select style={styles.selectBox} value={facialHair} onChange={e => setFacialHair(e.target.value)}>
+                    {FACIAL_HAIR_STYLES.map(s => <option key={s} value={s}>Facial Hair: {s}</option>)}
+                  </select>
+                </div>
+                <select style={styles.selectBox} value={accessory} onChange={e => setAccessory(e.target.value)}>
+                  {ACCESSORIES.map(s => <option key={s} value={s}>Accessory: {s}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <button style={{...styles.btn, ...styles.btnPrimary, width: "100%", marginTop: "1.5rem"}} 
+              onClick={() => onSave({skin, hair, hairStyle, hairTexture, facialHair, eyes, eyeShape, lipShape, hat, accessory, accessoryColor})}>
+              Enter Room
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function LobbyScreen({ gameState, myId, roomCode, onStart }) {
+      const players = gameState?.players ? Object.keys(gameState.players) : [];
+      const isAdmin = players[0] === myId;
+
+      return (
+        <div style={styles.centerPage}>
+          <div style={styles.card}>
+            <div style={{textAlign:"center", marginBottom:"1.5rem"}}>
+              <h2 style={{color: "#e9c46a", margin:"0 0 0.5rem 0"}}>Room Code: {roomCode}</h2>
+              <p style={{color: "#888", margin:0}}>Share this code for others to join.</p>
+            </div>
+            
+            <div style={styles.pipGrid}>
+              {players.map((pid, i) => {
+                const p = gameState.players[pid];
+                return (
+                  <div key={pid} style={{...styles.pip, background: PLAYER_COLORS[p.colorIdx]}}>
+                    <Avatar {...p.avatar} size={30} />
+                    <span>{pid === myId ? "You" : ANON_LABELS[i % ANON_LABELS.length]}</span>
+                  </div>
+                )
+              })}
+            </div>
+            {isAdmin ? (
+              <button style={{...styles.btn, ...styles.btnPrimary, marginTop: "2rem", width: "100%"}} onClick={onStart}>
+                Begin Walk ({players.length} ready)
+              </button>
+            ) : (
+              <p style={{marginTop: "2rem", color: "#aaa", textAlign:"center"}}>Waiting for host to start...</p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function GameScreen({ gameState, myId, displayQ, isRevealing, onAnswer }) {
+      if (!gameState || !gameState.players) return null;
+
+      const q = QUESTIONS[displayQ];
+      const players = gameState.players;
+      const myPlayer = players[myId];
+      const myAnswered = myPlayer?.answers[displayQ] !== undefined;
+      const playerList = Object.values(players);
+      const totalPlayers = playerList.length;
+      const answersIn = playerList.filter(p => p.answers && p.answers[displayQ] !== undefined).length;
+
+      const evalQ = isRevealing ? displayQ : displayQ - 1;
+      const myLogicalPos = getPlayerPos(myPlayer?.answers, evalQ);
+      const myRole = getRole(myLogicalPos);
+
+      return (
+        <div style={styles.gameLayout}>
+          
+          <div style={styles.boardCol}>
+            <div style={styles.header}>
+              <span style={{color: "#aaa"}}>Privilege Walk</span>
+              <span style={{color: "#e9c46a", fontWeight: "bold"}}>Question {displayQ + 1} of {QUESTIONS.length}</span>
+            </div>
+            <ChessBoard players={players} evalQ={evalQ} myId={myId} />
+            
+            <div style={styles.roleCard}>
+              <Avatar {...myPlayer?.avatar} size={70} />
+              <div>
+                <h3 style={{margin: "0 0 0.3rem", color: "#fff"}}>
+                  <span style={{color: PLAYER_COLORS[myPlayer?.colorIdx || 0], marginRight: "8px"}}>{myRole.icon}</span> 
+                  You are a {myRole.name}
+                </h3>
+                <p style={{margin: 0, fontSize: "0.9rem", color: "#aaa", lineHeight: 1.4}}>{myRole.desc}</p>
+              </div>
+            </div>
+          </div>
+
+          <div style={styles.interactionCol}>
+            {isRevealing ? (
+              <div style={styles.revealBox}>
+                <div style={styles.pulseIcon}>⚖️</div>
+                <h2 style={{color: "#fff", margin: "1rem 0"}}>Moves Revealed</h2>
+                <p style={{color: "#aaa"}}>Everyone's positions have been updated on the board.</p>
+                <p style={{color: "#e9c46a", fontSize: "0.9rem", marginTop: "2rem"}}>Next question loading...</p>
+              </div>
+            ) : !myAnswered ? (
+              <div style={{animation: "slideIn 0.3s ease"}}>
+                <div style={styles.qCard}>
+                  <div style={{...styles.badge, background: q.dir === 1 ? "#2a9d8f" : "#e63946"}}>
+                    {q.dir === 1 ? "▲ STEP FORWARD" : "▼ STEP BACK"}
+                  </div>
+                  <p style={{fontSize: "1.2rem", lineHeight: 1.6, color: "#fff"}}>{q.text}</p>
+                </div>
+                <div style={styles.actionRow}>
+                  <button style={{...styles.ansBtn, background: "#2a9d8f"}} onClick={() => onAnswer(true)}>
+                    Yes, this applies to me
+                  </button>
+                  <button style={{...styles.ansBtn, background: "#444"}} onClick={() => onAnswer(false)}>
+                    No / Skip
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={styles.waitingBox}>
+                <div style={styles.spinner}></div>
+                <h3 style={{color: "#fff"}}>Waiting for others...</h3>
+                <p style={{color: "#aaa"}}>{answersIn} of {totalPlayers} players answered.</p>
+                
+                <div style={{marginTop: "1.5rem", padding: "1rem", background: "#111", borderRadius: "8px", border: "1px solid #333"}}>
+                  <p style={{color: "#fff", margin: "0 0 1rem 0"}}>
+                    Your choice: <strong style={{color: myPlayer.answers[displayQ] ? "#2a9d8f" : "#e63946"}}>
+                      {myPlayer.answers[displayQ] ? "Yes (Applies to me)" : "No / Skip"}
+                    </strong>
+                  </p>
+                  <button 
+                    style={{...styles.ansBtn, background: "#444", padding: "0.8rem", fontSize: "0.9rem", width: "100%"}} 
+                    onClick={() => onAnswer(!myPlayer.answers[displayQ])}>
+                    Change Answer
+                  </button>
+                </div>
+
+                <p style={{fontSize: "0.8rem", color: "#666", marginTop: "1rem"}}>The question will automatically advance once everyone has answered.</p>
+              </div>
+            )}
+          </div>
+
+        </div>
+      );
+    }
+
+    // ─── Dynamic Column Board Visualization ──────────────────────────────────────
+    function ChessBoard({ players, evalQ, myId }) {
+      const playerEntries = Object.entries(players);
+      const numCols = Math.max(1, playerEntries.length);
+      const numRows = 22; 
+      const START_ROW = 6;
+
+      const positions = {};
+      playerEntries.forEach(([pid, p], index) => {
+        const colIdx = p.colIdx !== undefined ? p.colIdx : index;
+        const logicalPos = getPlayerPos(p.answers, evalQ);
+        const rowIdx = Math.max(0, Math.min(numRows - 1, START_ROW + logicalPos));
+        
+        if (!positions[rowIdx]) positions[rowIdx] = {};
+        positions[rowIdx][colIdx] = { pid, ...p, logicalPos };
+      });
+
+      const rows = Array.from({length: numRows}, (_, i) => numRows - 1 - i);
+      const cols = Array.from({length: numCols}, (_, i) => i);
+
+      return (
+        <div style={{
+          ...styles.boardWrap,
+          gridTemplateColumns: `repeat(${numCols}, 1fr)`,
+          gridTemplateRows: `repeat(${numRows}, 1fr)`
+        }}>
+          {rows.map(row => (
+            cols.map(col => {
+              const isDark = (row + col) % 2 === 0;
+              const occ = positions[row]?.[col];
+              const isStart = row === START_ROW;
+
+              return (
+                <div key={`${row}-${col}`} style={{
+                  ...styles.square,
+                  background: isDark ? "#000000" : "#ffffff",
+                  borderBottom: isStart ? "2px solid #e9c46a" : "none",
+                  borderTop: isStart ? "2px solid #e9c46a" : "none",
+                }}>
+                  {isStart && <span style={{...styles.startLabel, color: isDark ? "#ffffff" : "#000000", opacity: col === 0 ? 1 : 0.2}}>START</span>}
+                  
+                  {occ && (
+                    <div style={{
+                      display: "flex", flexDirection: "column", alignItems: "center",
+                      filter: occ.pid === myId ? "none" : "grayscale(0.3) opacity(0.7)",
+                      zIndex: occ.pid === myId ? 10 : 1,
+                      transition: "all 0.4s ease-in-out"
+                    }}>
+                      <Avatar {...occ.avatar} size={occ.pid === myId ? 32 : 22} />
+                      <div style={{
+                        color: PLAYER_COLORS[occ.colorIdx % PLAYER_COLORS.length],
+                        fontSize: occ.pid === myId ? "1.4rem" : "1rem",
+                        marginTop: "-6px",
+                        textShadow: occ.pid === myId ? "0 0 5px rgba(0,0,0,0.8)" : "none",
+                        background: occ.pid === myId ? "rgba(0,0,0,0.4)" : "none",
+                        borderRadius: "50%", padding: "0 4px"
+                      }}>
+                        {getRole(occ.logicalPos).icon}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          ))}
+        </div>
+      );
+    }
+
+    // ─── Results Screen ───────────────────────────────────────────────────────────
+    function ResultsScreen({ gameState, myId, roomCode }) {
+      const players = gameState?.players || {};
+      const evalQ = QUESTIONS.length - 1;
+
+      const results = Object.entries(players).map(([pid, p]) => {
+        const logicalPos = getPlayerPos(p.answers, evalQ);
+        return { pid, ...p, logicalPos, role: getRole(logicalPos) };
+      }).sort((a, b) => b.logicalPos - a.logicalPos);
+
+      const highestScore = results.length > 0 ? results[0].logicalPos : 0;
+
+      return (
+        <div style={styles.centerPage}>
+          <div style={{...styles.card, maxWidth: "800px"}}>
+            <h1 style={{color: "#e9c46a", textAlign: "center", margin:"0 0 0.5rem 0"}}>The Final Board</h1>
+            <p style={{textAlign: "center", color: "#aaa", marginBottom: "2rem"}}>
+              Room {roomCode} finished. Reflect on where everyone ended up.
+            </p>
+            
+            <div style={{display: "flex", gap: "2rem", flexWrap: "wrap"}}>
+              <div style={{flex: "1 1 300px"}}>
+                <ChessBoard players={players} evalQ={evalQ} myId={myId} />
+              </div>
+              <div style={{flex: "1 1 300px", display: "flex", flexDirection: "column", gap: "0.5rem"}}>
+                {results.map((r, i) => {
+                  const isMe = r.pid === myId;
+                  const isWinner = r.logicalPos === highestScore; 
+
+                  return (
+                    <div key={r.pid} style={{
+                      display: "flex", alignItems: "center", gap: "1rem",
+                      padding: "0.75rem", background: isMe ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.03)",
+                      borderRadius: "8px", borderLeft: `4px solid ${PLAYER_COLORS[r.colorIdx]}`
+                    }}>
+                      <div style={{position: "relative"}}>
+                        {isWinner && (
+                          <div style={{
+                            position: "absolute", top: "-15px", left: "50%", transform: "translateX(-50%)", 
+                            fontSize: "1.5rem", zIndex: 10, animation: "pulse 1.5s infinite"
+                          }}>
+                            👑
+                          </div>
+                        )}
+                        <Avatar {...r.avatar} size={44} />
+                      </div>
+
+                      <span style={{fontSize: "1.2rem", color: PLAYER_COLORS[r.colorIdx]}}>{r.role.icon}</span>
+                      <div style={{flex: 1}}>
+                        <div style={{fontWeight: isMe ? "bold" : "normal", color: isWinner ? "#e9c46a" : "#fff", display: "flex", alignItems: "center", gap: "6px"}}>
+                          {isMe ? "You" : ANON_LABELS[i % ANON_LABELS.length]}
+                          {isWinner && <span style={{fontSize: "0.6rem", background: "#e9c46a", color: "#111", padding: "2px 6px", borderRadius: "10px", fontWeight: "bold"}}>Highest Privilege</span>}
+                        </div>
+                        <div style={{fontSize: "0.8rem", color: "#aaa"}}>{r.role.name}</div>
+                      </div>
+                      <div style={{fontWeight: "bold", color: r.logicalPos >= 0 ? "#2a9d8f" : "#e63946"}}>
+                        {r.logicalPos > 0 ? "+" : ""}{r.logicalPos}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <button style={{...styles.btn, ...styles.btnPrimary, width: "100%", marginTop: "2rem"}} onClick={() => window.location.reload()}>
+              Return to Home
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── Styles ───────────────────────────────────────────────────────────────────
+    const styles = {
+      centerPage: {
+        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem"
+      },
+      card: {
+        background: "#1a1a1a", border: "1px solid #333", borderRadius: "12px",
+        padding: "2.5rem", width: "100%", maxWidth: "450px", boxShadow: "0 10px 30px rgba(0,0,0,0.5)"
+      },
+      titleIcon: { fontSize: "4rem", textAlign: "center", color: "#e9c46a", marginBottom: "0.5rem" },
+      title: { textAlign: "center", fontSize: "2rem", margin: "0 0 0.5rem", color: "#fff" },
+      subtitle: { textAlign: "center", color: "#888", marginBottom: "0.5rem", lineHeight: 1.5 },
+      btnRow: { display: "flex", gap: "1rem", flexDirection: "column" },
+      btn: {
+        padding: "1rem", borderRadius: "8px", border: "none", fontSize: "1.1rem",
+        cursor: "pointer", fontFamily: "inherit", fontWeight: "bold", transition: "opacity 0.2s"
+      },
+      btnPrimary: { background: "#e9c46a", color: "#111" },
+      btnSecondary: { background: "#333", color: "#fff" },
+      
+      input: {
+        width: "100%", padding: "1rem", fontSize: "1.5rem", textAlign: "center", letterSpacing: "4px",
+        borderRadius: "8px", border: "2px solid #333", background: "#0d0d0d", color: "#e9c46a", fontWeight: "bold"
+      },
+
+      pickerSection: { display: "flex", flexDirection: "column", gap: "0.5rem", background: "#222", padding: "1rem", borderRadius: "8px" },
+      pickerLabel: { color: "#fff", fontSize: "0.9rem", textAlign: "center", margin: "0 0 0.5rem 0", fontWeight:"bold" },
+      colorPickerRow: { display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap", marginBottom: "1rem" },
+      colorSwatch: { width: "25px", height: "25px", borderRadius: "50%", cursor: "pointer", transition: "transform 0.2s" },
+      colorSwatchSelected: { borderColor: "#fff !important", border: "2px solid #fff", transform: "scale(1.3)", zIndex: 2 },
+      selectBox: { width: "100%", padding: "0.5rem", borderRadius: "6px", background: "#111", color: "#fff", border: "1px solid #444", marginBottom: "0.5rem" },
+
+      pipGrid: { display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "center" },
+      pip: { padding: "0.5rem 1rem", borderRadius: "25px", fontSize: "0.9rem", color: "#fff", fontWeight: "bold", display: "flex", alignItems: "center", gap: "10px" },
+      
+      gameLayout: {
+        display: "flex", minHeight: "100vh", maxWidth: "1100px", margin: "0 auto", gap: "2rem", padding: "2rem 1rem",
+        flexWrap: "wrap", alignItems: "flex-start"
+      },
+      boardCol: { flex: "1 1 400px", display: "flex", flexDirection: "column", gap: "1rem" },
+      interactionCol: { flex: "1 1 350px", display: "flex", flexDirection: "column", justifyContent: "center", paddingTop: "3rem" },
+      header: { display: "flex", justifyContent: "space-between", fontSize: "0.9rem", borderBottom: "1px solid #333", paddingBottom: "0.5rem" },
+      
+      boardWrap: {
+        width: "100%", height: "60vh", minHeight: "500px", maxHeight: "700px", display: "grid",
+        border: "4px solid #222", borderRadius: "4px", overflow: "hidden", boxShadow: "0 10px 30px rgba(0,0,0,0.8)"
+      },
+      square: {
+        position: "relative", display: "flex", alignItems: "center", justifyContent: "center"
+      },
+      startLabel: {
+        position: "absolute", top: "2px", left: "4px", fontSize: "0.5rem", fontWeight: "bold", zIndex: 0
+      },
+      
+      roleCard: {
+        display: "flex", alignItems: "center", gap: "1.5rem", background: "#1a1a1a", border: "1px solid #333",
+        padding: "1.5rem", borderRadius: "12px", marginTop: "1rem"
+      },
+      qCard: {
+        background: "#1a1a1a", border: "1px solid #333", borderRadius: "12px", padding: "2rem", marginBottom: "1rem", boxShadow: "0 5px 15px rgba(0,0,0,0.3)"
+      },
+      badge: {
+        display: "inline-block", fontSize: "0.75rem", fontWeight: "bold", padding: "0.3rem 0.6rem", borderRadius: "4px", marginBottom: "1rem", color: "#fff"
+      },
+      actionRow: { display: "flex", flexDirection: "column", gap: "0.75rem" },
+      ansBtn: {
+        padding: "1.2rem", borderRadius: "8px", border: "none", color: "#fff", fontSize: "1rem", cursor: "pointer", fontFamily: "inherit", fontWeight: "bold"
+      },
+      
+      waitingBox: {
+        background: "transparent", border: "1px dashed #444", borderRadius: "12px", padding: "3rem 2rem", textAlign: "center"
+      },
+      spinner: {
+        width: "40px", height: "40px", border: "4px solid #333", borderTop: "4px solid #e9c46a", borderRadius: "50%", margin: "0 auto 1.5rem", animation: "spin 1s linear infinite"
+      },
+      revealBox: {
+        background: "#1a1a1a", border: "1px solid #e9c46a", borderRadius: "12px", padding: "3rem 2rem", textAlign: "center", animation: "slideIn 0.3s ease"
+      },
+      pulseIcon: {
+        fontSize: "3rem", animation: "pulse 2s infinite"
+      }
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<PrivilegeWalkColumn />);
+  </script>
+</body>
+</html>

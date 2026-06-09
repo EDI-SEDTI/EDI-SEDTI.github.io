@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>InclusiveDocs — Accessibility Suite</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,900;1,300&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f2f1f6;--card:#fff;--ink:#18171a;--muted:#6b6578;
+  --border:#dddae4;--blue:#2563eb;--teal:#059669;--red:#ef4444;--orange:#f59e0b;
+  --purple:#7c3aed;--pink:#db2777;
+  --shadow:0 2px 20px rgba(0,0,0,.07);--r:16px;--rs:10px;
+}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:80px;}
+
+/* ── HEADER ── */
+.site-header{
+  background:#0f172a;padding:0 48px;height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:200;border-bottom:3px solid var(--blue);
+}
+.logo{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:900;color:#fff;letter-spacing:-.02em}
+.logo em{font-style:normal;color:#60a5fa}
+.hbadge{background:#1a56db22;border:1px solid #3b82f680;color:#93c5fd;font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:4px 13px;border-radius:99px}
+
+/* ── HERO ── */
+.hero{
+  background:linear-gradient(160deg,#0f172a 0%,#1e1b2e 55%,#0f172a 100%);
+  color:#fff;padding:48px 48px 40px;text-align:center;
+}
+.hero h1{font-family:'Fraunces',serif;font-size:2.4rem;font-weight:900;margin-bottom:10px;line-height:1.15;}
+.hero p{color:#94a3b8;font-size:1rem;max-width:520px;margin:0 auto;}
+
+/* ── MAIN ── */
+.main{max-width:900px;margin:36px auto;padding:0 24px;}
+
+/* ── BACK BUTTON ── */
+.btn-back{
+  background:transparent;border:none;color:var(--muted);font-weight:600;
+  font-size:0.95rem;cursor:pointer;display:inline-flex;align-items:center;
+  gap:6px;margin-bottom:28px;transition:color .2s;font-family:'DM Sans',sans-serif;
+}
+.btn-back:hover{color:var(--blue);}
+.btn-back svg{flex-shrink:0;}
+
+/* ── TOP-LEVEL SECTION CARDS ── */
+.section-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:24px;}
+@media(max-width:600px){.section-grid{grid-template-columns:1fr;}}
+
+.section-card{
+  background:var(--card);border:2px solid var(--border);border-radius:var(--r);
+  padding:44px 36px;text-align:center;cursor:pointer;transition:all .22s;
+  box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.section-card::after{
+  content:'';position:absolute;inset:0;border-radius:var(--r);
+  background:linear-gradient(135deg,rgba(37,99,235,.06),rgba(5,150,105,.06));
+  opacity:0;transition:opacity .22s;
+}
+.section-card:hover{border-color:var(--blue);transform:translateY(-5px);box-shadow:0 16px 40px rgba(37,99,235,.14);}
+.section-card:hover::after{opacity:1;}
+.section-card:focus-visible{outline:3px solid var(--blue);outline-offset:3px;}
+
+.section-card.games-card:hover{border-color:var(--purple);}
+.section-card.games-card:hover::after{background:linear-gradient(135deg,rgba(124,58,237,.07),rgba(219,39,119,.06));}
+
+.section-card.survey-card:hover{border-color:var(--orange);}
+.section-card.survey-card:hover::after{background:linear-gradient(135deg,rgba(245,158,11,.07),rgba(239,68,68,.06));}
+
+.section-icon{
+  width:72px;height:72px;border-radius:50%;margin:0 auto 20px;
+  display:flex;align-items:center;justify-content:center;font-size:2rem;
+}
+.tools-icon{background:linear-gradient(135deg,#2563eb,#059669);}
+.games-icon{background:linear-gradient(135deg,#7c3aed,#db2777);}
+.survey-icon{background:linear-gradient(135deg,#f59e0b,#ef4444);}
+
+.section-title{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:900;margin-bottom:10px;color:var(--ink);}
+.section-desc{color:var(--muted);font-size:.95rem;line-height:1.6;}
+.section-tag{
+  display:inline-block;margin-top:18px;padding:5px 14px;border-radius:99px;
+  font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+}
+.tools-tag{background:#eff6ff;color:#2563eb;}
+.games-tag{background:#f5f3ff;color:#7c3aed;}
+.survey-tag{background:#fffbeb;color:#d97706;}
+
+/* ── PANEL ── */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:28px;margin-bottom:24px;box-shadow:var(--shadow);display:none;}
+.panel-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:22px;border-bottom:1px solid var(--border);padding-bottom:12px;}
+
+/* ── TOOL MODE CARDS (inside Tools section) ── */
+.mode-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
+.mode-card{
+  background:#f8fafc;border:2px solid var(--border);border-radius:var(--rs);
+  padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;
+}
+.mode-card:hover{border-color:var(--blue);background:#eff6ff;transform:translateY(-3px);box-shadow:0 8px 24px rgba(37,99,235,.12);}
+.mode-card:focus-visible{outline:3px solid var(--blue);outline-offset:3px;}
+.mode-icon{font-size:2.4rem;margin-bottom:14px;}
+.mode-title{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:700;margin-bottom:6px;color:var(--ink);}
+.mode-desc{color:var(--muted);font-size:.82rem;line-height:1.5;}
+
+/* ── GAME CARDS ── */
+.game-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:580px){.game-grid{grid-template-columns:1fr;}}
+
+.game-card{
+  border-radius:var(--r);padding:36px 28px;cursor:pointer;
+  transition:all .22s;position:relative;overflow:hidden;border:2px solid transparent;
+  text-decoration:none;display:block;
+}
+.game-card:focus-visible{outline:3px solid #fff;outline-offset:3px;}
+
+.game-card.progress{
+  background:linear-gradient(145deg,#1e1b4b,#312e81);
+  border-color:#4338ca;
+}
+.game-card.privilege{
+  background:linear-gradient(145deg,#1a1a2e,#3b0764);
+  border-color:#7c3aed;
+}
+.game-card:hover{transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,.3);}
+.game-card.progress:hover{border-color:#818cf8;box-shadow:0 20px 50px rgba(99,102,241,.35);}
+.game-card.privilege:hover{border-color:#c084fc;box-shadow:0 20px 50px rgba(168,85,247,.35);}
+
+.game-badge{
+  display:inline-block;padding:4px 12px;border-radius:99px;
+  font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  margin-bottom:16px;
+}
+.progress .game-badge{background:rgba(99,102,241,.25);color:#a5b4fc;border:1px solid rgba(165,180,252,.3);}
+.privilege .game-badge{background:rgba(168,85,247,.25);color:#d8b4fe;border:1px solid rgba(216,180,254,.3);}
+
+.game-emoji{font-size:2.8rem;margin-bottom:14px;display:block;}
+.game-title{font-family:'Fraunces',serif;font-size:1.35rem;font-weight:900;color:#fff;margin-bottom:8px;line-height:1.2;}
+.game-desc{font-size:.88rem;color:rgba(255,255,255,.65);line-height:1.55;margin-bottom:20px;}
+.game-cta{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:10px 20px;border-radius:99px;font-size:.85rem;font-weight:700;
+  transition:all .2s;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;
+}
+.progress .game-cta{background:#4f46e5;color:#fff;}
+.privilege .game-cta{background:#7c3aed;color:#fff;}
+.game-card:hover .game-cta{filter:brightness(1.15);}
+
+/* ── PPTX UPLOAD ZONE ── */
+.upload-zone{
+  border:2px dashed var(--border);border-radius:var(--r);
+  background:var(--card);padding:40px 32px;text-align:center;cursor:pointer;
+  transition:all .2s;margin-bottom:24px;position:relative;
+}
+.upload-zone:hover,.upload-zone.over{border-color:var(--blue);background:#f8fafc;}
+.upload-zone input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;}
+.uicon{width:56px;height:56px;margin:0 auto 12px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#059669);display:flex;align-items:center;justify-content:center;font-size:1.5rem;}
+.upload-zone h2{font-family:'Fraunces',serif;font-size:1.2rem;margin-bottom:6px;}
+.upload-zone p{color:var(--muted);font-size:.85rem;}
+
+/* ── SCORE / LOGS ── */
+.score-row{display:flex;align-items:center;gap:24px;margin-bottom:20px;}
+.score-circle{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:2rem;font-weight:900;color:#fff;border:5px solid;}
+.score-circle.bad{background:#7f1d1d;border-color:var(--red);}
+.score-circle.warn{background:#78350f;border-color:var(--orange);}
+.score-circle.good{background:#064e3b;border-color:var(--teal);}
+.score-text h3{font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:4px;}
+.score-text p{color:var(--muted);font-size:.9rem;line-height:1.4;}
+.log-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
+.log-item{background:#f1f5f9;padding:12px 16px;border-radius:var(--rs);border-left:4px solid var(--muted);}
+.log-item .val{font-size:1.4rem;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.log-item .lbl{font-size:.72rem;color:var(--muted);font-weight:500;}
+
+/* ── TEMPLATES ── */
+.templates-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px;}
+.tmpl-card{border:2px solid var(--border);border-radius:var(--rs);padding:16px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:10px;}
+.tmpl-card:hover{border-color:#93c5fd;transform:translateY(-2px);}
+.tmpl-card.active{border-color:var(--blue);background:#eff6ff;box-shadow:0 4px 12px rgba(37,99,235,.15);}
+.tmpl-header{display:flex;justify-content:space-between;align-items:center;}
+.tmpl-title{font-weight:700;font-size:.9rem;}
+.tmpl-swatches{display:flex;gap:4px;}
+.swatch{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.1);}
+.rules-list{font-size:.85rem;color:var(--muted);margin-bottom:20px;padding-left:20px;line-height:1.7;}
+
+/* ── BUTTONS ── */
+.btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
+.btn-primary{
+  width:100%;padding:15px;background:linear-gradient(135deg,#2563eb,#059669);
+  color:#fff;border:none;border-radius:var(--rs);font-family:'DM Sans',sans-serif;
+  font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s;
+  display:flex;justify-content:center;align-items:center;gap:8px;
+}
+.btn-primary.sim-btn{background:#475569;}
+.btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.15);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+
+/* ── LOADING ── */
+#loading{display:none;text-align:center;padding:30px;}
+.spin{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:rot .8s linear infinite;margin:0 auto 12px;}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;background:#0f172a;color:#f1f5f9;padding:12px 20px;border-radius:var(--rs);border-left:4px solid #059669;font-size:.85rem;box-shadow:0 4px 24px rgba(0,0,0,.2);transform:translateY(100px);transition:transform .3s;z-index:9999;}
+.toast.show{transform:translateY(0);}
+
+/* ── HOLIDAY / TEXT PANELS ── */
+.holiday-result-box{margin-top:20px;padding:16px;border-radius:var(--rs);display:none;font-size:.95rem;}
+.holiday-result-box ul{padding-left:20px;margin-top:10px;line-height:1.6;}
+.llm-config{background:#f8fafc;border:1px solid var(--border);border-radius:var(--rs);padding:16px;margin-bottom:16px;}
+.llm-config label{font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px;}
+.llm-config input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rs);font-family:inherit;font-size:.9rem;background:#fff;color:var(--ink);}
+.llm-config input:focus{outline:none;border-color:var(--blue);}
+.config-row{display:grid;grid-template-columns:2fr 1fr;gap:12px;}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">Inclusive<em>Docs</em></div>
+  <div class="hbadge" id="navBadge">Home</div>
+</header>
+
+<div class="hero">
+  <h1 id="heroTitle">Accessibility Suite</h1>
+  <p id="heroDesc">Choose a section to get started — tools to fix your documents, interactive games to build EDI awareness, or view community insights.</p>
+</div>
+
+<div class="main">
+
+  <button id="btnBack" class="btn-back" style="display:none;" onclick="goBack()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    Back
+  </button>
+
+  <div id="viewHome">
+    <div class="section-grid">
+
+      <div class="section-card tools-card" onclick="goSection('tools')" tabindex="0" role="button" aria-label="Open Tools section">
+        <div class="section-icon tools-icon">🛠️</div>
+        <div class="section-title">Tools</div>
+        <div class="section-desc">Audit and fix PowerPoint files, rewrite text with EDI-friendly language, texturize charts, and check deadlines.</div>
+        <span class="section-tag tools-tag">4 tools available</span>
+      </div>
+
+      <div class="section-card games-card" onclick="goSection('games')" tabindex="0" role="button" aria-label="Open Games section">
+        <div class="section-icon games-icon">🎮</div>
+        <div class="section-title">Games</div>
+        <div class="section-desc">Interactive experiences designed to build empathy and EDI awareness. Track your progress or walk through a privilege exercise.</div>
+        <span class="section-tag games-tag">2 games available</span>
+      </div>
+
+      <div class="section-card survey-card" onclick="goSection('surveys')" tabindex="0" role="button" aria-label="Open Survey Dashboard">
+        <div class="section-icon survey-icon">📊</div>
+        <div class="section-title">Survey Results</div>
+        <div class="section-desc">Explore comprehensive insights and interact with the data gathered from the latest accessibility and EDI feedback.</div>
+        <span class="section-tag survey-tag">Dashboard</span>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="viewTools" style="display:none;">
+    <div class="mode-grid">
+
+      <div class="mode-card" onclick="setTool('text')" tabindex="0" role="button">
+        <div class="mode-icon">📝</div>
+        <div class="mode-title">Text EDI Auditor</div>
+        <div class="mode-desc">Scan content for non-inclusive language and auto-replace using OpenLLM.</div>
+      </div>
+
+      <div class="mode-card" onclick="setTool('pptx')" tabindex="0" role="button">
+        <div class="mode-icon">📊</div>
+        <div class="mode-title">PowerPoint File</div>
+        <div class="mode-desc">Audit and auto-fix PPTX color palettes, fonts, italic text, and generate a colorblind simulator.</div>
+      </div>
+
+      <div class="mode-card" onclick="setTool('image')" tabindex="0" role="button">
+        <div class="mode-icon">🗺️</div>
+        <div class="mode-title">Image / Map</div>
+        <div class="mode-desc">Upload a static graph or map. Instantly detect colors and apply accessible textures.</div>
+      </div>
+
+      <div class="mode-card" onclick="setTool('holiday')" tabindex="0" role="button">
+        <div class="mode-icon">📅</div>
+        <div class="mode-title">Deadline Auditor</div>
+        <div class="mode-desc">Check assignment dates against recognized uOttawa religious holidays.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="viewGames" style="display:none;">
+    <div class="game-grid">
+
+      <a class="game-card progress" href="edi_game.html" target="_blank" rel="noopener">
+        <span class="game-badge">EDI Game</span>
+        <span class="game-emoji">📈</span>
+        <div class="game-title">Progress Tracker</div>
+        <div class="game-desc">Follow your EDI journey through interactive milestones. Reflect on growth, track learning, and celebrate progress toward a more inclusive mindset.</div>
+        <span class="game-cta">
+          Play now
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </span>
+      </a>
+
+      <a class="game-card privilege" href="privilage_game.html" target="_blank" rel="noopener">
+        <span class="game-badge">Awareness Game</span>
+        <span class="game-emoji">🚶</span>
+        <div class="game-title">Privilege Walk</div>
+        <div class="game-desc">Step forward or back based on life experiences. A reflective exercise that reveals how different backgrounds shape access, opportunity, and belonging.</div>
+        <span class="game-cta">
+          Play now
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </span>
+      </a>
+
+    </div>
+  </div>
+
+  <div id="viewSurveys" style="display:none;">
+    <div class="panel" style="display:block; padding:0; overflow:hidden; height:75vh; min-height:650px;">
+      <iframe src="Interactive_Survey_Dashboard.html" width="100%" height="100%" style="border:none;" title="Interactive Survey Dashboard"></iframe>
+    </div>
+  </div>
+
+  <div class="panel" id="holidayPanel">
+    <div class="panel-title">Academic Deadline Auditor (2026–2027)</div>
+    <p style="font-size:.95rem;color:var(--muted);margin-bottom:20px;line-height:1.5;">Enter a proposed deadline to check for religious observance conflicts per uOttawa's official calendar.</p>
+    <div style="display:flex;gap:12px;align-items:stretch;margin-bottom:12px;flex-wrap:wrap;">
+      <input type="date" id="dateInputHoliday" style="flex:1;min-width:200px;padding:16px;border:2px solid var(--border);border-radius:var(--rs);font-family:inherit;font-size:1rem;">
+      <button class="btn-primary" id="btnCheckHoliday" style="width:auto;padding:0 28px;">Check Date</button>
+    </div>
+    <div id="holidayResultBox" class="holiday-result-box"></div>
+  </div>
+
+  <div class="panel" id="textPanel">
+    <div class="panel-title">Inclusive Language Scanner (Powered by OpenLLM)</div>
+    <div class="llm-config">
+      <div class="config-row" style="margin-bottom:12px;">
+        <div>
+          <label>OpenLLM Server URL</label>
+          <input type="text" id="llmServerUrl" value="http://localhost:3000" placeholder="e.g. http://localhost:3000"/>
+        </div>
+        <div>
+          <label>Model Name</label>
+          <input type="text" id="llmModelName" value="meta-llama/Llama-3.2-3B-Instruct" placeholder="Model ID"/>
+        </div>
+      </div>
+      <p style="font-size:.8rem;color:var(--muted);line-height:1.5;">Start with: <code style="background:#e2e8f0;padding:2px 6px;border-radius:4px;">openllm serve meta-llama/Llama-3.2-3B-Instruct --port 3000</code></p>
+    </div>
+    <p style="font-size:.9rem;color:var(--muted);margin-bottom:12px;">Paste your document text below to rewrite using EDI terminology.</p>
+    <textarea id="ediInput" rows="8" style="width:100%;padding:16px;border:2px solid var(--border);border-radius:var(--rs);margin-bottom:16px;font-family:inherit;resize:vertical;font-size:1rem;line-height:1.5;" placeholder="Paste your text here..."></textarea>
+    <button class="btn-primary" id="btnScanText" style="width:auto;padding:12px 24px;border-radius:99px;">✨ Rewrite with OpenLLM</button>
+    <div id="ediOutputWrapper" style="display:none;margin-top:20px;">
+      <div class="panel-title" style="color:var(--teal);border-bottom:none;">Updated Text</div>
+      <textarea id="ediOutput" rows="8" style="width:100%;padding:16px;border:2px solid var(--teal);background:#f0fdf4;border-radius:var(--rs);font-family:inherit;resize:vertical;font-size:1rem;line-height:1.5;color:var(--ink);" readonly></textarea>
+      <button class="btn-primary" id="btnCopyText" style="background:#0f172a;margin-top:12px;">📋 Copy Updated Text</button>
+    </div>
+  </div>
+
+  <div class="upload-zone" id="uploadZonePptx" style="display:none;">
+    <input type="file" id="fileInputPptx" accept=".pptx"/>
+    <div class="uicon">📂</div>
+    <h2 id="upTitlePptx">Drop your .pptx file here</h2>
+    <p>File is processed securely in your browser</p>
+  </div>
+
+  <div class="panel" id="auditPanel">
+    <div class="panel-title">1. Initial Audit Results</div>
+    <div class="score-row">
+      <div class="score-circle" id="initialScoreUI">--</div>
+      <div class="score-text">
+        <h3>Needs Work</h3>
+        <p>We found several accessibility issues in your slides. See the breakdown below.</p>
+      </div>
+    </div>
+    <div class="log-grid" id="auditLogGrid"></div>
+  </div>
+
+  <div class="panel" id="fixPanel">
+    <div class="panel-title">2. Choose Accessible Target & Fix</div>
+    <ul class="rules-list">
+      <li><strong>Avoids Combinations:</strong> Green/Red, Green/Brown, Blue/Purple, Light Green/Yellow, Blue/Gray.</li>
+      <li><strong>Auto-Texture:</strong> Injects lines and hashes into XML charts.</li>
+      <li><strong>Italic Removal:</strong> All italic runs are set to normal.</li>
+      <li><strong>Font Normalization:</strong> All fonts remapped to approved accessible typefaces.</li>
+      <li><strong>Minimum Font Size:</strong> Any text below 18pt is raised to 18pt.</li>
+    </ul>
+    <div class="templates-grid" id="templateGrid"></div>
+    <button class="btn-primary" id="btnFix">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M8 12h8M12 8l4 4-4 4"/></svg>
+      Apply Fixes & Build Simulator
+    </button>
+  </div>
+
+  <div class="panel" id="finalPanel">
+    <div class="panel-title">3. Downloads</div>
+    <div class="btn-grid">
+      <button class="btn-primary" id="btnDownloadPptx" style="background:#0f172a">⬇ Download Accessible PPTX</button>
+      <button class="btn-primary sim-btn" id="btnDownloadSim">👁 Download Colorblind Simulator</button>
+    </div>
+  </div>
+
+  <div class="upload-zone" id="uploadZoneImg" style="display:none;">
+    <input type="file" id="fileInputImg" accept="image/png,image/jpeg,image/jpg"/>
+    <div class="uicon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">🖼️</div>
+    <h2 id="upTitleImg">Drop your Map or Chart image here</h2>
+    <p>Supports .PNG and .JPG formats</p>
+  </div>
+
+  <div class="panel" id="imagePanel">
+    <div class="panel-title">Multi-Color Chart Texturizer</div>
+    <div style="background:#eff6ff;border-left:4px solid var(--blue);padding:16px;border-radius:var(--rs);margin-bottom:20px;font-size:.9rem;line-height:1.5;">
+      <strong>Multi-Texture Engine:</strong> Click the button below to map unique texture patterns across each color family.
+    </div>
+    <div style="text-align:center;background:#e2e8f0;border-radius:var(--rs);padding:10px;overflow:hidden;">
+      <canvas id="imgCanvas" style="max-width:100%;height:auto;box-shadow:var(--shadow);background:#fff;"></canvas>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-top:20px;">
+      <button class="btn-primary" id="btnAutoTexturize" style="background:var(--blue)">✨ Auto-Texturize</button>
+      <button class="btn-primary" id="btnDownloadImg" style="background:#0f172a;">⬇ Download Textured Image</button>
+    </div>
+  </div>
+
+  <div id="loading">
+    <div class="spin"></div>
+    <p id="loadingMsg">Processing...</p>
+  </div>
+
+</div><div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  NAVIGATION STATE
+// ═══════════════════════════════════════════════════════════
+let navStack = ['home'];
+
+const HERO_TEXT = {
+  home:    { title: 'Accessibility Suite',       desc: 'Choose a section to get started — tools to fix your documents, interactive games to build EDI awareness, or view community insights.' },
+  tools:   { title: 'Accessibility Tools',       desc: 'Select a tool below to audit and improve your documents.' },
+  games:   { title: 'Interactive EDI Games',     desc: 'Explore empathy and inclusion through interactive experiences.' },
+  surveys: { title: 'Survey Results Dashboard',  desc: 'Explore the data and insights gathered from our community surveys.' },
+  pptx:    { title: 'Audit & Fix PowerPoint',    desc: 'Fix unsafe colors, italic text, non-standard fonts, and small text sizes.' },
+  image:   { title: 'Texturize Charts & Maps',   desc: 'Upload an image to detect colors and apply accessible textures.' },
+  text:    { title: 'EDI Text Auditor',          desc: 'Scan and update text to ensure inclusive language using OpenLLM.' },
+  holiday: { title: 'Deadline Auditor',          desc: 'Ensure deadlines respect religious observances on uOttawa\'s calendar.' },
+};
+
+const BADGE_TEXT = {
+  home: 'Home', tools: 'Tools', games: 'Games', surveys: 'Surveys',
+  pptx: 'PPTX Mode', image: 'Image Mode', text: 'Text Mode', holiday: 'Holiday Mode'
+};
+
+function setHero(key) {
+  document.getElementById('heroTitle').textContent = HERO_TEXT[key].title;
+  document.getElementById('heroDesc').textContent  = HERO_TEXT[key].desc;
+  document.getElementById('navBadge').textContent  = BADGE_TEXT[key] || key;
+}
+
+function hideAllViews() {
+  ['viewHome','viewTools','viewGames','viewSurveys'].forEach(id => document.getElementById(id).style.display = 'none');
+}
+
+function hideAllToolPanels() {
+  ['holidayPanel','textPanel','uploadZonePptx','auditPanel','fixPanel','finalPanel','uploadZoneImg','imagePanel','loading'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
+
+function updateBackBtn() {
+  document.getElementById('btnBack').style.display = navStack.length > 1 ? 'inline-flex' : 'none';
+}
+
+function goBack() {
+  navStack.pop();
+  const prev = navStack[navStack.length - 1];
+  hideAllViews();
+  hideAllToolPanels();
+
+  if (prev === 'home') {
+    document.getElementById('viewHome').style.display = 'block';
+    setHero('home');
+  } else if (prev === 'tools') {
+    document.getElementById('viewTools').style.display = 'block';
+    setHero('tools');
+  } else if (prev === 'games') {
+    document.getElementById('viewGames').style.display = 'block';
+    setHero('games');
+  } else if (prev === 'surveys') {
+    document.getElementById('viewSurveys').style.display = 'block';
+    setHero('surveys');
+  }
+  updateBackBtn();
+}
+
+function goSection(section) {
+  navStack.push(section);
+  hideAllViews();
+  setHero(section);
+  updateBackBtn();
+  if (section === 'tools') {
+    document.getElementById('viewTools').style.display = 'block';
+  } else if (section === 'games') {
+    document.getElementById('viewGames').style.display = 'block';
+  } else if (section === 'surveys') {
+    document.getElementById('viewSurveys').style.display = 'block';
+  }
+}
+
+function setTool(tool) {
+  navStack.push(tool);
+  hideAllViews();
+  hideAllToolPanels();
+  setHero(tool);
+  updateBackBtn();
+
+  if (tool === 'pptx') {
+    document.getElementById('uploadZonePptx').style.display = 'block';
+  } else if (tool === 'image') {
+    document.getElementById('uploadZoneImg').style.display = 'block';
+  } else if (tool === 'text') {
+    document.getElementById('textPanel').style.display = 'block';
+  } else if (tool === 'holiday') {
+    document.getElementById('holidayPanel').style.display = 'block';
+  }
+}
+
+// Keyboard support for section cards
+document.querySelectorAll('[role="button"]').forEach(el => {
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
+});
+
+// ═══════════════════════════════════════════════════════════
+//  UOTTAWA HOLIDAYS DATABASE (2026-2027)
+// ═══════════════════════════════════════════════════════════
+const uOttawaHolidays = [
+  { name: "Mahayana New Year (Buddhism)", start: "2026-01-03", end: "2026-01-03" },
+  { name: "Birth of Guru Gobind Singh Ji (Sikhism)", start: "2026-01-06", end: "2026-01-06" },
+  { name: "Christmas (Christianity: Orthodox)", start: "2026-01-06", end: "2026-01-07" },
+  { name: "Maghi (Sikhism)", start: "2026-01-13", end: "2026-01-13" },
+  { name: "Makar Sankranti (Hinduism)", start: "2026-01-14", end: "2026-01-14" },
+  { name: "Laylat al Miraj (Islam)", start: "2026-01-16", end: "2026-01-16" },
+  { name: "Epiphany (Christianity: Orthodox)", start: "2026-01-19", end: "2026-01-19" },
+  { name: "Vasanta Panchami (Hinduism)", start: "2026-01-23", end: "2026-01-23" },
+  { name: "Magha Purnima (Hinduism)", start: "2026-02-01", end: "2026-02-01" },
+  { name: "Laylat al Bara'at (Islam)", start: "2026-02-02", end: "2026-02-03" },
+  { name: "Lunar New Year/Chinese New Year", start: "2026-02-17", end: "2026-02-17" },
+  { name: "Ramadan (Islam)", start: "2026-02-18", end: "2026-03-20" },
+  { name: "Purim (Judaism)", start: "2026-03-02", end: "2026-03-03" },
+  { name: "Magha Puja Day (Buddhism)", start: "2026-03-03", end: "2026-03-03" },
+  { name: "Holi (Hinduism/Sikhism)", start: "2026-03-04", end: "2026-03-04" },
+  { name: "Laylat al-Qadr (Islam)", start: "2026-03-15", end: "2026-03-15" },
+  { name: "Eid Al Fitr (Islam)", start: "2026-03-20", end: "2026-03-20" },
+  { name: "Naw-Rúz (Bahá'í) (Islam)", start: "2026-03-21", end: "2026-03-21" },
+  { name: "Pesach/Passover (Judaism)", start: "2026-04-01", end: "2026-04-09" },
+  { name: "Good Friday (Christianity: Protestant, RC)", start: "2026-04-03", end: "2026-04-03" },
+  { name: "Easter (Christianity: Protestant, RC)", start: "2026-04-05", end: "2026-04-05" },
+  { name: "Good Friday (Christianity: Orthodox)", start: "2026-04-10", end: "2026-04-10" },
+  { name: "Easter (Christianity: Orthodox)", start: "2026-04-12", end: "2026-04-12" },
+  { name: "Vaisakhi (Sikhism)", start: "2026-04-13", end: "2026-04-13" },
+  { name: "Yom HaShoah (Judaism)", start: "2026-04-13", end: "2026-04-14" },
+  { name: "Ridvan (1st Day) (Bahá'í)", start: "2026-04-21", end: "2026-04-21" },
+  { name: "Ridvan (9th Day) (Bahá'í)", start: "2026-04-29", end: "2026-04-29" },
+  { name: "Wesak/Vesak (Buddhism)", start: "2026-05-01", end: "2026-05-01" },
+  { name: "Ridvan (12th Day) (Bahá'í)", start: "2026-05-02", end: "2026-05-02" },
+  { name: "Shavuot (Judaism)", start: "2026-05-21", end: "2026-05-23" },
+  { name: "Declaration of the Bab (Bahá'í)", start: "2026-05-24", end: "2026-05-24" },
+  { name: "Eid Al Adah (Islam)", start: "2026-05-27", end: "2026-05-28" },
+  { name: "Ascension of Baha'u'llah (Bahá'í)", start: "2026-05-29", end: "2026-05-29" },
+  { name: "Pentecost (Christianity: Orthodox)", start: "2026-05-31", end: "2026-05-31" },
+  { name: "Islamic New Year (Islam)", start: "2026-06-16", end: "2026-06-16" },
+  { name: "Ashura (Islam)", start: "2026-06-25", end: "2026-06-25" },
+  { name: "Martyrdom of the Bab (Baha'i)", start: "2026-07-10", end: "2026-07-10" },
+  { name: "Tish'a B'Av (Judaism)", start: "2026-07-21", end: "2026-07-22" },
+  { name: "Asalha Puja Day (Buddhism)", start: "2026-07-29", end: "2026-07-29" },
+  { name: "Mawlid an Nabi (Islam)", start: "2026-08-25", end: "2026-08-26" },
+  { name: "Sri Krishna Jayanti/Janmashtami", start: "2026-09-04", end: "2026-09-04" },
+  { name: "Rosh Hashanah (Judaism)", start: "2026-09-11", end: "2026-09-13" },
+  { name: "Yom Kippur (Judaism)", start: "2026-09-20", end: "2026-09-21" },
+  { name: "Sukkot (Judaism)", start: "2026-09-25", end: "2026-10-02" },
+  { name: "Shemini Atzeret (Judaism)", start: "2026-10-02", end: "2026-10-04" },
+  { name: "Simchat Torah (Judaism)", start: "2026-10-02", end: "2026-10-04" },
+  { name: "Navratri (Hinduism)", start: "2026-10-11", end: "2026-10-20" },
+  { name: "Dussehra (Hinduism)", start: "2026-10-20", end: "2026-10-20" },
+  { name: "All Saints Day (Christianity)", start: "2026-11-01", end: "2026-11-01" },
+  { name: "All Souls Day (Christianity)", start: "2026-11-02", end: "2026-11-02" },
+  { name: "Diwali", start: "2026-11-08", end: "2026-11-08" },
+  { name: "Birth of the Báb (Baha'i)", start: "2026-11-10", end: "2026-11-10" },
+  { name: "Birth of Baha'u'llah (Baha'i)", start: "2026-11-11", end: "2026-11-11" },
+  { name: "Martyrdom of Guru Tegh Bahadur", start: "2026-11-24", end: "2026-11-24" },
+  { name: "Gurpurab/Birthdate of Guru Nanak", start: "2026-11-24", end: "2026-11-24" },
+  { name: "Hanukkah (Judaism)", start: "2026-12-04", end: "2026-12-12" },
+  { name: "Christmas (Christianity)", start: "2026-12-25", end: "2026-12-25" },
+  { name: "Laylat al Miraj (Islam)", start: "2027-01-05", end: "2027-01-05" },
+  { name: "Birth of Guru Gobind Singh Ji (Sikhism)", start: "2027-01-06", end: "2027-01-06" },
+  { name: "Christmas (Christianity: Orthodox)", start: "2027-01-06", end: "2027-01-07" },
+  { name: "Maghi (Sikhism)", start: "2027-01-14", end: "2027-01-14" },
+  { name: "Makar Sankranti (Hinduism)", start: "2027-01-14", end: "2027-01-14" },
+  { name: "Epiphany (Christianity: Orthodox)", start: "2027-01-19", end: "2027-01-19" },
+  { name: "Mahayana New Year (Buddhism)", start: "2027-01-22", end: "2027-01-22" },
+  { name: "Laylat al Baraat (Islam)", start: "2027-01-23", end: "2027-01-24" },
+  { name: "Lunar New Year/Chinese New Year", start: "2027-02-06", end: "2027-02-06" },
+  { name: "Ramadan (Islam)", start: "2027-02-07", end: "2027-03-08" },
+  { name: "Vasanta Panchami (Hinduism)", start: "2027-02-11", end: "2027-02-11" },
+  { name: "Magha Purnima (Hinduism)", start: "2027-02-20", end: "2027-02-20" },
+  { name: "Magha Puja Day (Buddhism)", start: "2027-02-21", end: "2027-02-21" },
+  { name: "Laylat al-Qadr (Islam)", start: "2027-03-05", end: "2027-03-05" },
+  { name: "Eid Al Fitr (Islam)", start: "2027-03-10", end: "2027-03-10" },
+  { name: "Naw-Rúz (Bahá'í)", start: "2027-03-21", end: "2027-03-21" },
+  { name: "Holi (Hinduism/Sikhism)", start: "2027-03-22", end: "2027-03-22" },
+  { name: "Purim (Judaism)", start: "2027-03-22", end: "2027-03-23" },
+  { name: "Good Friday (Christianity: Protestant, RC)", start: "2027-03-26", end: "2027-03-26" },
+  { name: "Easter (Christianity: Protestant, RC)", start: "2027-03-28", end: "2027-03-28" },
+  { name: "Vaisakhi (Sikhism)", start: "2027-04-14", end: "2027-04-14" },
+  { name: "Ridvan (1st Day) (Bahá'í)", start: "2027-04-21", end: "2027-04-21" },
+  { name: "Pesach/Passover (Judaism)", start: "2027-04-22", end: "2027-04-29" },
+  { name: "Ridvan (9th Day) (Bahá'í)", start: "2027-04-29", end: "2027-04-29" },
+  { name: "Good Friday (Christianity: Orthodox)", start: "2027-04-30", end: "2027-04-30" },
+  { name: "Ridvan (12th Day) (Bahá'í)", start: "2027-05-02", end: "2027-05-02" },
+  { name: "Easter (Christianity: Orthodox)", start: "2027-05-02", end: "2027-05-02" },
+  { name: "Yom HaShoah (Judaism)", start: "2027-05-03", end: "2027-05-04" },
+  { name: "Pentecost (Christianity: Orthodox)", start: "2027-05-16", end: "2027-05-16" },
+  { name: "Eid Al Adah (Islam)", start: "2027-05-16", end: "2027-05-17" },
+  { name: "Wesak/Vesak (Buddhism)", start: "2027-05-20", end: "2027-05-20" },
+  { name: "Declaration of the Bab (Bahá'í)", start: "2027-05-24", end: "2027-05-24" },
+  { name: "Ascension of Baha'u'llah (Bahá'í)", start: "2027-05-29", end: "2027-05-29" },
+  { name: "Islamic New Year (Islam)", start: "2027-06-06", end: "2027-06-06" },
+  { name: "Shavuot (Judaism)", start: "2027-06-10", end: "2027-06-12" },
+  { name: "Ashura (Islam)", start: "2027-06-15", end: "2027-06-15" },
+  { name: "Martyrdom of the Bab (Bahá'í)", start: "2027-07-10", end: "2027-07-10" },
+  { name: "Asalha Puja Day (Buddhism)", start: "2027-07-20", end: "2027-07-20" },
+  { name: "Tish'a B'Av (Judaism)", start: "2027-08-11", end: "2027-08-12" },
+  { name: "Mawlid an Nabi (Islam)", start: "2027-08-14", end: "2027-08-15" },
+  { name: "Sri Krishna Jayanti/Janmashtami (Hinduism)", start: "2027-08-25", end: "2027-08-25" },
+  { name: "Navratri (Hinduism)", start: "2027-09-30", end: "2027-10-08" },
+  { name: "Rosh Hashanah (Judaism)", start: "2027-10-01", end: "2027-10-03" },
+  { name: "Dussehra (Hinduism)", start: "2027-10-09", end: "2027-10-09" },
+  { name: "Yom Kippur (Judaism)", start: "2027-10-10", end: "2027-10-11" },
+  { name: "Sukkot (Judaism)", start: "2027-10-15", end: "2027-10-22" },
+  { name: "Shemini Atzeret (Judaism)", start: "2027-10-22", end: "2027-10-24" },
+  { name: "Simchat Torah (Judaism)", start: "2027-10-22", end: "2027-10-24" },
+  { name: "Diwali", start: "2027-10-29", end: "2027-10-29" },
+  { name: "Birth of the Báb (Bahá'í)", start: "2027-10-30", end: "2027-10-30" },
+  { name: "The Birth of the Bahá'ulláh (Bahá'í)", start: "2027-10-31", end: "2027-10-31" },
+  { name: "All Saints Day (Christianity)", start: "2027-11-01", end: "2027-11-01" },
+  { name: "All Souls Day (Christianity)", start: "2027-11-02", end: "2027-11-02" },
+  { name: "Birthdate of Guru Nanak Dev Ji (Sikhism)", start: "2027-11-14", end: "2027-11-14" },
+  { name: "Martyrdom of Guru Tegh Bahadur Ji (Sikhism)", start: "2027-11-24", end: "2027-11-24" },
+  { name: "Christmas (Christianity)", start: "2027-12-25", end: "2027-12-25" },
+  { name: "Hanukkah (Judaism)", start: "2027-12-25", end: "2028-01-01" }
+];
+
+// ═══════════════════════════════════════════════════════════
+//  HOLIDAY CHECKER
+// ═══════════════════════════════════════════════════════════
+document.getElementById('btnCheckHoliday').addEventListener('click', () => {
+  const dateStr = document.getElementById('dateInputHoliday').value;
+  if (!dateStr) { showToast("⚠ Please select a valid date first."); return; }
+  const inputDate = new Date(dateStr + 'T00:00:00');
+  inputDate.setHours(0,0,0,0);
+  let found = [];
+  uOttawaHolidays.forEach(h => {
+    const s = new Date(h.start+'T00:00:00'); s.setHours(0,0,0,0);
+    const e = new Date(h.end+'T00:00:00'); e.setHours(23,59,59,999);
+    if (inputDate >= s && inputDate <= e) found.push(h.name);
+  });
+  const box = document.getElementById('holidayResultBox');
+  box.style.display = 'block';
+  if (found.length > 0) {
+    box.style.cssText = 'display:block;background:#fef2f2;border:2px solid var(--red);color:#7f1d1d;padding:16px;border-radius:10px;margin-top:20px;font-size:.95rem;';
+    box.innerHTML = `<strong>⚠️ Warning:</strong> ${dateStr} falls on:<ul style="padding-left:20px;margin-top:8px;line-height:1.7;">${found.map(c=>`<li>${c}</li>`).join('')}</ul>`;
+  } else {
+    box.style.cssText = 'display:block;background:#f0fdf4;border:2px solid var(--teal);color:#064e3b;padding:16px;border-radius:10px;margin-top:20px;font-size:.95rem;';
+    box.innerHTML = `<strong>✅ Clear!</strong> No recognized uOttawa holidays fall on ${dateStr}.`;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+//  EDI TEXT — OpenLLM
+// ═══════════════════════════════════════════════════════════
+document.getElementById('btnScanText').addEventListener('click', async () => {
+  const inputText = document.getElementById('ediInput').value;
+  if (!inputText.trim()) { showToast("⚠ Please enter some text to scan."); return; }
+  const serverUrl = (document.getElementById('llmServerUrl').value || 'http://localhost:3000').replace(/\/$/,'');
+  const modelName = document.getElementById('llmModelName').value || 'meta-llama/Llama-3.2-3B-Instruct';
+  const btn = document.getElementById('btnScanText');
+  const orig = btn.innerHTML;
+  btn.innerHTML = `<span class="spin" style="width:16px;height:16px;border-width:2px;display:inline-block;margin-right:8px;vertical-align:middle;"></span> Calling OpenLLM...`;
+  btn.disabled = true;
+  document.getElementById('ediOutputWrapper').style.display = 'none';
+  try {
+    const res = await fetch(`${serverUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: modelName,
+        messages: [
+          { role: 'system', content: `You are an EDI language expert. Rewrite text to be inclusive, respectful, and accessible. Apply gender-neutral language, person-first disability language, remove ableist/racially biased terminology and microaggressions. Return ONLY the rewritten text.` },
+          { role: 'user', content: `Rewrite using inclusive EDI-friendly language:\n\n${inputText}` }
+        ],
+        max_tokens: 2048, temperature: 0.3
+      })
+    });
+    if (!res.ok) throw new Error(`OpenLLM API error ${res.status}`);
+    const data = await res.json();
+    const rewritten = data.choices?.[0]?.message?.content?.trim();
+    if (!rewritten) throw new Error('Empty response from model.');
+    document.getElementById('ediOutput').value = rewritten;
+    document.getElementById('ediOutputWrapper').style.display = 'block';
+    showToast('✨ OpenLLM rewrite complete!');
+  } catch(e) {
+    showToast(`⚠ ${e.message.includes('fetch') ? 'Cannot reach OpenLLM server.' : e.message}`);
+  } finally { btn.innerHTML = orig; btn.disabled = false; }
+});
+document.getElementById('btnCopyText').addEventListener('click', () => {
+  document.getElementById('ediOutput').select();
+  document.execCommand('copy');
+  showToast("📋 Copied to clipboard!");
+});
+
+// ═══════════════════════════════════════════════════════════
+//  IMAGE TEXTURIZER
+// ═══════════════════════════════════════════════════════════
+const zoneImg = document.getElementById('uploadZoneImg');
+const inputImg = document.getElementById('fileInputImg');
+['dragover','dragenter'].forEach(e => zoneImg.addEventListener(e, ev=>{ev.preventDefault();zoneImg.classList.add('over');}));
+['dragleave','dragend','drop'].forEach(e => zoneImg.addEventListener(e, ev=>{ev.preventDefault();zoneImg.classList.remove('over');}));
+zoneImg.addEventListener('drop', ev=>{if(ev.dataTransfer.files[0]) handleImageUpload(ev.dataTransfer.files[0]);});
+inputImg.addEventListener('change', ()=>{if(inputImg.files[0]) handleImageUpload(inputImg.files[0]);});
+
+let originalImageData = null, imgOriginalFilename = 'chart';
+
+function handleImageUpload(file) {
+  if(!file.type.startsWith('image/')) { showToast('⚠ Please upload a valid image file'); return; }
+  imgOriginalFilename = file.name.split('.')[0];
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const cvs = document.getElementById('imgCanvas');
+      const ctx = cvs.getContext('2d',{willReadFrequently:true});
+      let w=img.width, h=img.height;
+      if(w>1200){h=Math.floor(h*(1200/w));w=1200;}
+      cvs.width=w;cvs.height=h;
+      ctx.drawImage(img,0,0,w,h);
+      originalImageData=ctx.getImageData(0,0,w,h);
+      document.getElementById('uploadZoneImg').style.display='none';
+      document.getElementById('imagePanel').style.display='block';
+      showToast('Image loaded! Click Auto-Texturize.');
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function rgbToHsl(r,g,b){
+  r/=255;g/=255;b/=255;
+  let max=Math.max(r,g,b),min=Math.min(r,g,b),h,s,l=(max+min)/2;
+  if(max===min){h=s=0;}else{
+    let d=max-min;
+    s=l>0.5?d/(2-max-min):d/(max+min);
+    switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}
+    h/=6;
+  }
+  return[h*360,s*100,l*100];
+}
+document.getElementById('btnAutoTexturize').addEventListener('click', () => {
+  if (!originalImageData) return;
+
+  const cvs = document.getElementById('imgCanvas');
+  const ctx = cvs.getContext('2d');
+  const w = cvs.width;
+  const h = cvs.height;
+
+  const d = new ImageData(
+    new Uint8ClampedArray(originalImageData.data),
+    originalImageData.width,
+    originalImageData.height
+  );
+
+  const P = {
+    D: (x, y) => (x % 6 < 2) && (y % 6 < 2),
+    C: (x, y) => Math.abs(Math.sin(x / 4) * 4 + (y % 12) - 6) < 1.5,
+    DR: (x, y) => (x + y) % 9 < 2,
+    DL: (x, y) => Math.abs(x - y) % 9 < 2,
+    G: (x, y) => (x % 8 === 0) || (y % 8 === 0),
+    H: (x, y) => y % 7 < 2,
+    Da: (x, y) => (y % 6 < 1) && (x % 8 < 4)
+  };
+
+  for (let py = 0; py < h; py++) {
+    for (let px = 0; px < w; px++) {
+      const i = (py * w + px) * 4;
+
+      const r = d.data[i];
+      const g = d.data[i + 1];
+      const b = d.data[i + 2];
+      const a = d.data[i + 3];
+
+      if (a < 50) continue;
+
+      const [hue, sat, light] = rgbToHsl(r, g, b);
+
+      if (sat > 12 && light > 10 && light < 93) {
+        let fn = null;
+
+        if (hue >= 325 || hue < 15) {
+          fn = P.DL;
+        } else if (hue < 45) {
+          fn = P.C;
+        } else if (hue < 70) {
+          fn = P.Da;
+        } else if (hue < 160) {
+          fn = P.DR;
+        } else if (hue < 195) {
+          fn = P.G;
+        } else if (hue < 255) {
+          fn = P.D;
+        } else {
+          fn = P.H;
+        }
+
+        if (fn && fn(px, py)) {
+          const c = light > 60 ? 0 : 255;
+          d.data[i] = c;
+          d.data[i + 1] = c;
+          d.data[i + 2] = c;
+        }
+      }
+    }
+  }
+
+  ctx.putImageData(d, 0, 0);
+  showToast('✨ Textures applied!');
+});
+
+document.getElementById('btnDownloadImg').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.download = `${imgOriginalFilename || 'image'}-textured.png`;
+  a.href = document.getElementById('imgCanvas').toDataURL('image/png');
+  a.click();
+});
+
+// ═══════════════════════════════════════════════════════════
+//  PPTX PROCESSING
+// ═══════════════════════════════════════════════════════════
+const APPROVED_SANS=['Arial','Calibri','Futura','Helvetica','Montserrat','Open Sans','Roboto','Tahoma'];
+const APPROVED_SERIF=['Times New Roman','Georgia'];
+const ALL_APPROVED=[...APPROVED_SANS,...APPROVED_SERIF];
+const KNOWN_SERIFS=['times','georgia','garamond','palatino','book antiqua','cambria','constantia','didot','caslon','baskerville','bodoni','century','goudy','minion','sabon','trajan','perpetua','courier','courier new'];
+
+function normalizeFont(f){
+  if(!f)return'Calibri';
+  const l=f.toLowerCase();
+  for(const a of ALL_APPROVED)if(l===a.toLowerCase())return f;
+  for(const s of KNOWN_SERIFS)if(l.includes(s))return'Georgia';
+  return'Calibri';
+}
+
+const TEMPLATES={
+  universal:{id:'universal',name:'High Contrast Default',colors:['000000','1E40AF','D97706','FFFFFF','4B5563','FACC15']},
+  blueOrange:{id:'blueOrange',name:'Protan/Deutan Safe',colors:['0F172A','2563EB','F59E0B','F8FAFC','64748B','38BDF8']},
+  monoTexture:{id:'monoTexture',name:'Monochrome Textures',colors:['111827','374151','6B7280','9CA3AF','E5E7EB','FFFFFF']}
+};
+
+let activeTemplateId='universal',loadedZip=null,processedBlob=null,simulatedBlob=null,originalBuffer=null,originalFilename='presentation.pptx';
+let auditMetrics={issuesColor:0,issuesTextSize:0,issuesFont:0,issuesItalic:0,issuesChart:0,score:100};
+
+const tmplGrid=document.getElementById('templateGrid');
+Object.values(TEMPLATES).forEach(tmpl=>{
+  const card=document.createElement('div');
+  card.className=`tmpl-card ${tmpl.id===activeTemplateId?'active':''}`;
+  card.innerHTML=`<div class="tmpl-header"><div class="tmpl-title">${tmpl.name}</div><div class="tmpl-swatches">${tmpl.colors.map(c=>`<div class="swatch" style="background:#${c}"></div>`).join('')}</div></div>`;
+  card.onclick=()=>{document.querySelectorAll('.tmpl-card').forEach(c=>c.classList.remove('active'));card.classList.add('active');activeTemplateId=tmpl.id;};
+  tmplGrid.appendChild(card);
+});
+
+const zonePptx=document.getElementById('uploadZonePptx');
+const inputPptx=document.getElementById('fileInputPptx');
+['dragover','dragenter'].forEach(e=>zonePptx.addEventListener(e,ev=>{ev.preventDefault();zonePptx.classList.add('over');}));
+['dragleave','dragend','drop'].forEach(e=>zonePptx.addEventListener(e,ev=>{ev.preventDefault();zonePptx.classList.remove('over');}));
+zonePptx.addEventListener('drop',ev=>{if(ev.dataTransfer.files[0])handleUploadPptx(ev.dataTransfer.files[0]);});
+inputPptx.addEventListener('change',()=>{if(inputPptx.files[0])handleUploadPptx(inputPptx.files[0]);});
+
+async function handleUploadPptx(file){
+  if(!file.name.toLowerCase().endsWith('.pptx')){showToast('⚠ Please upload a .pptx file');return;}
+  originalFilename=file.name;
+  document.getElementById('upTitlePptx').textContent=file.name;
+  showLoading('Auditing presentation structure...');
+  try{
+    originalBuffer=await file.arrayBuffer();
+    loadedZip=await JSZip.loadAsync(originalBuffer);
+    await runAudit();
+  }catch(err){showToast('⚠ Error: '+err.message);}
+  hideLoading();
+}
+
+async function runAudit(){
+  auditMetrics={issuesColor:0,issuesTextSize:0,issuesFont:0,issuesItalic:0,issuesChart:0,score:100};
+  const promises=[];
+  loadedZip.forEach((rp,ze)=>{
+    promises.push((async()=>{
+      if(ze.dir)return;
+      if(!rp.endsWith('.xml')||rp.includes('bin'))return;
+      const c=await ze.async('text');
+      const hexM=c.match(/val="[0-9A-Fa-f]{6}"/g);
+      if(hexM)auditMetrics.issuesColor+=Math.floor(hexM.length/5);
+      const szM=c.match(/sz="(\d+)"/g);
+      if(szM)szM.forEach(m=>{const sz=parseInt(m.replace(/\D/g,''));if(sz>0&&sz<1800)auditMetrics.issuesTextSize++;});
+      const fM=c.match(/typeface="([^"]+)"/g);
+      if(fM)fM.forEach(m=>{const f=m.match(/typeface="([^"]+)"/)?.[1]||'';if(f&&f!=='+mj-lt'&&f!=='+mn-lt'&&normalizeFont(f)!==f)auditMetrics.issuesFont++;});
+      const iM=c.match(/\bi="1"\b/g);
+      if(iM)auditMetrics.issuesItalic+=iM.length;
+      if(rp.includes('ppt/charts/chart')){const fll=c.match(/<a:solidFill>/g);if(fll)auditMetrics.issuesChart+=fll.length;}
+    })());
+  });
+  await Promise.all(promises);
+  auditMetrics.score=Math.max(12,Math.floor(100-(auditMetrics.issuesColor*1.5)-(auditMetrics.issuesTextSize*2)-(auditMetrics.issuesChart)-(auditMetrics.issuesFont)-(auditMetrics.issuesItalic*0.5)));
+  renderAuditResults();
+}
+
+function renderAuditResults(){
+  const sc=document.getElementById('initialScoreUI');
+  sc.textContent=auditMetrics.score;
+  sc.className='score-circle '+(auditMetrics.score>85?'good':auditMetrics.score>60?'warn':'bad');
+  document.getElementById('auditLogGrid').innerHTML=`
+    <div class="log-item" style="border-color:var(--blue)"><div class="val">${auditMetrics.issuesColor}</div><div class="lbl">Unsafe Colors</div></div>
+    <div class="log-item" style="border-color:var(--orange)"><div class="val">${auditMetrics.issuesChart}</div><div class="lbl">Untextured Charts</div></div>
+    <div class="log-item" style="border-color:var(--red)"><div class="val">${auditMetrics.issuesTextSize}</div><div class="lbl">Small Text &lt;18pt</div></div>
+    <div class="log-item" style="border-color:#8b5cf6"><div class="val">${auditMetrics.issuesFont}</div><div class="lbl">Non-Standard Fonts</div></div>
+    <div class="log-item" style="border-color:#ec4899"><div class="val">${auditMetrics.issuesItalic}</div><div class="lbl">Italic Runs</div></div>`;
+  document.getElementById('uploadZonePptx').style.display='none';
+  document.getElementById('auditPanel').style.display='block';
+  document.getElementById('fixPanel').style.display='block';
+}
+
+function colorDistance(h1,h2){
+  const r1=parseInt(h1.slice(0,2),16),g1=parseInt(h1.slice(2,4),16),b1=parseInt(h1.slice(4,6),16);
+  const r2=parseInt(h2.slice(0,2),16),g2=parseInt(h2.slice(2,4),16),b2=parseInt(h2.slice(4,6),16);
+  const rm=(r1+r2)/2,r=r1-r2,g=g1-g2,b=b1-b2;
+  return Math.sqrt((((512+rm)*r*r)>>8)+4*g*g+(((767-rm)*b*b)>>8));
+}
+
+function getClosestSafeColor(src,colors){
+  const hex=src.toUpperCase().replace(/[^0-9A-F]/g,'');
+  if(hex.length!==6)return null;
+  const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
+  const lum=(0.2126*r+0.7152*g+0.0722*b)/255;
+  if(lum>0.92)return'FFFFFF';if(lum<0.05)return'000000';
+  let cl=colors[0],md=Infinity;
+  for(const s of colors){const d=colorDistance(hex,s);if(d<md){md=d;cl=s;}}
+  return cl;
+}
+
+function simulateProtanopia(hex){
+  const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
+  const th=c=>Math.min(255,Math.max(0,Math.round(c))).toString(16).padStart(2,'0').toUpperCase();
+  return th(0.56667*r+0.43333*g)+th(0.55833*r+0.44167*g)+th(0.24167*g+0.75833*b);
+}
+
+function fixItalics(x){return x.replace(/(<a:rPr\b[^>]*?)\s+i="1"([^>]*?>)/g,'$1$2');}
+function fixFonts(x){return x.replace(/(<a:(?:latin|ea|cs)\s+typeface=")([^"]+)(")/g,(m,p,f,po)=>{if(f==='+mj-lt'||f==='+mn-lt'||f==='+mj-ea'||f==='+mn-ea')return m;return`${p}${normalizeFont(f)}${po}`;});}
+function fixFontSizes(x){return x.replace(/(<a:rPr\b[^>]*?\bsz=")(\d+)(")/g,(m,p,s,po)=>parseInt(s)<1800?`${p}1800${po}`:m);}
+
+function processStandardXML(x,colors){
+  let o=x.replace(/(<[a-zA-Z0-9:]*?(?:[cC]lr|clrVal)\b[^>]*?\b(?:val|lastClr)=")([0-9A-Fa-f]{6})(")/g,(m,p,h,po)=>{const s=getClosestSafeColor(h,colors);return s?`${p}${s}${po}`:m;});
+  return fixFonts(fixItalics(fixFontSizes(o)));
+}
+
+function processChartTextures(x){
+  const pats=['diagStripe','smGrid','pct25','wdUpwardDiag','trellis'];let pi=0;
+  return x.replace(/<a:solidFill>([\s\S]*?)<\/a:solidFill>/g,(m,inner)=>{
+    if(!inner.includes('Clr'))return m;
+    const p=pats[pi++%pats.length];
+    return`<a:pattFill prst="${p}"><a:fgClr>${inner}</a:fgClr><a:bgClr><a:srgbClr val="FFFFFF"/></a:bgClr></a:pattFill>`;
+  });
+}
+
+function processThemeXML(x,colors){
+  let o=x;
+  for(let i=1;i<=6;i++){
+    const ts=`<a:accent${i}>`,te=`</a:accent${i}>`;
+    let si=o.indexOf(ts),ei=o.indexOf(te,si);
+    if(si!==-1&&ei!==-1){
+      let bl=o.substring(si,ei).replace(/(val|lastClr)="[0-9A-Fa-f]{6}"/g,`$1="${colors[(i-1)%colors.length]}"`);
+      o=o.substring(0,si)+bl+o.substring(ei);
+    }
+  }
+  return fixFonts(fixItalics(fixFontSizes(o)));
+}
+
+function processSimulatedXML(x){return x.replace(/(val|lastClr)="([0-9A-Fa-f]{6})"/g,(m,a,h)=>`${a}="${simulateProtanopia(h)}"`);}
+
+document.getElementById('btnFix').addEventListener('click',async()=>{
+  if(!originalBuffer)return;
+  document.getElementById('btnFix').disabled=true;
+  showLoading('Applying all fixes...');
+  document.getElementById('finalPanel').style.display='none';
+  try{
+    const outZip=await JSZip.loadAsync(originalBuffer);
+    const simZip=await JSZip.loadAsync(originalBuffer);
+    const colors=TEMPLATES[activeTemplateId].colors;
+    const ps=[];
+    outZip.forEach((rp,ze)=>{
+      ps.push((async()=>{
+        if(ze.dir||!rp.endsWith('.xml')||rp.includes('bin'))return;
+        const oc=await ze.async('text');
+        let fc=oc,sc=processSimulatedXML(oc);
+        if(rp.includes('ppt/theme/theme'))fc=processThemeXML(oc,colors);
+        else if(rp.includes('ppt/charts/chart'))fc=processStandardXML(processChartTextures(oc),colors);
+        else fc=processStandardXML(oc,colors);
+        outZip.file(rp,fc);simZip.file(rp,sc);
+      })());
+    });
+    await Promise.all(ps);
+    document.getElementById('loadingMsg').textContent='Zipping files...';
+    const mtype='application/vnd.openxmlformats-officedocument.presentationml.presentation';
+    processedBlob=await outZip.generateAsync({type:'blob',mimeType:mtype});
+    simulatedBlob=await simZip.generateAsync({type:'blob',mimeType:mtype});
+    hideLoading();
+    document.getElementById('finalPanel').style.display='block';
+    document.getElementById('finalPanel').scrollIntoView({behavior:'smooth'});
+    showToast('✦ Done! Italics fixed, fonts normalized, sizes enforced.');
+  }catch(err){hideLoading();showToast('⚠ Error: '+err.message);}
+  document.getElementById('btnFix').disabled=false;
+});
+
+document.getElementById('btnDownloadPptx').addEventListener('click',()=>{
+  if(!processedBlob)return;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(processedBlob);
+  a.download=`${originalFilename.replace(/\.pptx$/i,'')}-accessible.pptx`;
+  a.click();
+});
+
+document.getElementById('btnDownloadSim').addEventListener('click',()=>{
+  if(!simulatedBlob)return;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(simulatedBlob);
+  a.download=`${originalFilename.replace(/\.pptx$/i,'')}-protanopia-sim.pptx`;
+  a.click();
+});
+
+function showLoading(msg){document.getElementById('loadingMsg').textContent=msg;document.getElementById('loading').style.display='block';}
+function hideLoading(){document.getElementById('loading').style.display='none';}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+</script>
+</body>
+</html>
