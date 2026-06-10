@@ -220,7 +220,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 <body>
 
 <header class="site-header">
-  <div class="logo">Inclusive<em>Docs</em></div>
+  <div class="logo">SEDTI <em>EDI</em></div>
   <div class="header-links">
     <a href="https://app.notion.com/p/Guidelines-for-Equity-Diversity-and-Inclusion-EDI-at-the-School-of-Engineering-Design-and-Teachi-126ae76873b7826ba267815384c41ce0?source=copy_link" target="_blank" rel="noopener" class="header-link">
       📖 EDI Guidelines
@@ -231,7 +231,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 
 <div class="hero">
   <h1 id="heroTitle">Accessibility Suite</h1>
-  <p id="heroDesc">Choose a section to get started — tools to fix your documents, interactive games to build EDI awareness, or view community insights.</p>
+  <p id="heroDesc">Choose a section to get started — interactive games to build EDI awareness, view community insights, or tools to fix your documents.</p>
 </div>
 
 <div class="main">
@@ -244,13 +244,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
   <div id="viewHome">
     <div class="section-grid">
 
-      <div class="section-card tools-card" onclick="goSection('tools')" tabindex="0" role="button" aria-label="Open Tools section">
-        <div class="section-icon tools-icon">🛠️</div>
-        <div class="section-title">Tools</div>
-        <div class="section-desc">Audit and fix PowerPoint files, rewrite text with EDI-friendly language, texturize charts, and check deadlines.</div>
-        <span class="section-tag tools-tag">4 tools available</span>
-      </div>
-
+      <!-- 1. GAMES -->
       <div class="section-card games-card" onclick="goSection('games')" tabindex="0" role="button" aria-label="Open Games section">
         <div class="section-icon games-icon">🎮</div>
         <div class="section-title">Games</div>
@@ -258,11 +252,20 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
         <span class="section-tag games-tag">2 games available</span>
       </div>
 
+      <!-- 2. SURVEYS -->
       <div class="section-card survey-card" onclick="goSection('surveys')" tabindex="0" role="button" aria-label="Open Survey Dashboard">
         <div class="section-icon survey-icon">📊</div>
         <div class="section-title">Survey Results</div>
         <div class="section-desc">Explore comprehensive insights and interact with the data gathered from the latest accessibility and EDI feedback.</div>
         <span class="section-tag survey-tag">Dashboard</span>
+      </div>
+
+      <!-- 3. TOOLS -->
+      <div class="section-card tools-card" onclick="goSection('tools')" tabindex="0" role="button" aria-label="Open Tools section">
+        <div class="section-icon tools-icon">🛠️</div>
+        <div class="section-title">Tools</div>
+        <div class="section-desc">Audit and fix PowerPoint files, rewrite text with EDI-friendly language, texturize charts, and check deadlines.</div>
+        <span class="section-tag tools-tag">4 tools available</span>
       </div>
 
     </div>
@@ -271,28 +274,32 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
   <div id="viewTools" style="display:none;">
     <div class="mode-grid">
 
-      <div class="mode-card" onclick="setTool('text')" tabindex="0" role="button">
-        <div class="mode-icon">📝</div>
-        <div class="mode-title">Text EDI Auditor</div>
-        <div class="mode-desc">Scan content for non-inclusive language and auto-replace using OpenLLM.</div>
+      <!-- 1. HOLIDAY / DEADLINE AUDITOR -->
+      <div class="mode-card" onclick="setTool('holiday')" tabindex="0" role="button">
+        <div class="mode-icon">📅</div>
+        <div class="mode-title">Deadline Auditor</div>
+        <div class="mode-desc">Check assignment dates against recognized uOttawa religious holidays and statutory breaks.</div>
       </div>
 
-      <div class="mode-card" onclick="setTool('pptx')" tabindex="0" role="button">
-        <div class="mode-icon">📊</div>
-        <div class="mode-title">PowerPoint File</div>
-        <div class="mode-desc">Audit and auto-fix PPTX color palettes, fonts, italic text, and generate a colorblind simulator.</div>
-      </div>
-
+      <!-- 2. IMAGE / MAP -->
       <div class="mode-card" onclick="setTool('image')" tabindex="0" role="button">
         <div class="mode-icon">🗺️</div>
         <div class="mode-title">Image / Map</div>
         <div class="mode-desc">Upload a static graph or map. Instantly detect colors and apply accessible textures.</div>
       </div>
 
-      <div class="mode-card" onclick="setTool('holiday')" tabindex="0" role="button">
-        <div class="mode-icon">📅</div>
-        <div class="mode-title">Deadline Auditor</div>
-        <div class="mode-desc">Check assignment dates against recognized uOttawa religious holidays.</div>
+      <!-- 3. PPTX -->
+      <div class="mode-card" onclick="setTool('pptx')" tabindex="0" role="button">
+        <div class="mode-icon">📊</div>
+        <div class="mode-title">PowerPoint File</div>
+        <div class="mode-desc">Audit and auto-fix PPTX color palettes, fonts, italic text, and generate a colorblind simulator.</div>
+      </div>
+
+      <!-- 4. TEXT EDI AUDITOR -->
+      <div class="mode-card" onclick="setTool('text')" tabindex="0" role="button">
+        <div class="mode-icon">📝</div>
+        <div class="mode-title">Text EDI Auditor</div>
+        <div class="mode-desc">Scan content for non-inclusive language and auto-replace using OpenLLM.</div>
       </div>
 
     </div>
@@ -301,22 +308,24 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
   <div id="viewGames" style="display:none;">
     <div class="game-grid">
 
-      <a class="game-card progress" href="edi_game.html" target="_blank" rel="noopener">
-        <span class="game-badge">EDI Game</span>
-        <span class="game-emoji">📈</span>
-        <div class="game-title">Progress Tracker</div>
-        <div class="game-desc">Follow your EDI journey through interactive milestones. Reflect on growth, track learning, and celebrate progress toward a more inclusive mindset.</div>
+      <!-- 1. PRIVILEGE WALK -->
+      <a class="game-card privilege" href="privilage_game.html" target="_blank" rel="noopener">
+        <span class="game-badge">Awareness Game</span>
+        <span class="game-emoji">🚶</span>
+        <div class="game-title">Privilege Walk</div>
+        <div class="game-desc">Step forward or back based on life experiences. A reflective exercise that reveals how different backgrounds shape access, opportunity, and belonging.</div>
         <span class="game-cta">
           Play now
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </span>
       </a>
 
-      <a class="game-card privilege" href="privilage_game.html" target="_blank" rel="noopener">
-        <span class="game-badge">Awareness Game</span>
-        <span class="game-emoji">🚶</span>
-        <div class="game-title">Privilege Walk</div>
-        <div class="game-desc">Step forward or back based on life experiences. A reflective exercise that reveals how different backgrounds shape access, opportunity, and belonging.</div>
+      <!-- 2. PROGRESS TRACKER -->
+      <a class="game-card progress" href="edi_game.html" target="_blank" rel="noopener">
+        <span class="game-badge">EDI Game</span>
+        <span class="game-emoji">📈</span>
+        <div class="game-title">Progress Tracker</div>
+        <div class="game-desc">Follow your EDI journey through interactive milestones. Reflect on growth, track learning, and celebrate progress toward a more inclusive mindset.</div>
         <span class="game-cta">
           Play now
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -334,7 +343,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 
   <div class="panel" id="holidayPanel">
     <div class="panel-title">Academic Deadline Auditor (2026–2027)</div>
-    <p style="font-size:.95rem;color:var(--muted);margin-bottom:20px;line-height:1.5;">Enter a proposed deadline to check for religious observance conflicts per uOttawa's official calendar.</p>
+    <p style="font-size:.95rem;color:var(--muted);margin-bottom:20px;line-height:1.5;">Enter a proposed deadline to check for religious observance and academic schedule conflicts per uOttawa's official calendar.</p>
     <div style="display:flex;gap:12px;align-items:stretch;margin-bottom:12px;flex-wrap:wrap;">
       <input type="date" id="dateInputHoliday" style="flex:1;min-width:200px;padding:16px;border:2px solid var(--border);border-radius:var(--rs);font-family:inherit;font-size:1rem;">
       <button class="btn-primary" id="btnCheckHoliday" style="width:auto;padding:0 28px;">Check Date</button>
@@ -445,14 +454,14 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 let navStack = ['home'];
 
 const HERO_TEXT = {
-  home:    { title: 'Accessibility Suite',       desc: 'Choose a section to get started — tools to fix your documents, interactive games to build EDI awareness, or view community insights.' },
+  home:    { title: 'Accessibility Suite',       desc: 'Choose a section to get started — interactive games to build EDI awareness, view community insights, or tools to fix your documents.' },
   tools:   { title: 'Accessibility Tools',       desc: 'Select a tool below to audit and improve your documents.' },
   games:   { title: 'Interactive EDI Games',     desc: 'Explore empathy and inclusion through interactive experiences.' },
   surveys: { title: 'Survey Results Dashboard',  desc: 'Explore the data and insights gathered from our community surveys.' },
   pptx:    { title: 'Audit & Fix PowerPoint',    desc: 'Fix unsafe colors, italic text, non-standard fonts, and small text sizes.' },
   image:   { title: 'Texturize Charts & Maps',   desc: 'Upload an image to detect colors and apply accessible textures.' },
   text:    { title: 'EDI Text Auditor',          desc: 'Scan and update text to ensure inclusive language using OpenLLM.' },
-  holiday: { title: 'Deadline Auditor',          desc: 'Ensure deadlines respect religious observances on uOttawa\'s calendar.' },
+  holiday: { title: 'Deadline Auditor',          desc: 'Ensure deadlines respect religious observances and statutory breaks on uOttawa\'s calendar.' },
 };
 
 const BADGE_TEXT = {
@@ -541,9 +550,28 @@ document.querySelectorAll('[role="button"]').forEach(el => {
 });
 
 // ═══════════════════════════════════════════════════════════
-//  UOTTAWA HOLIDAYS DATABASE (2026-2027)
+//  UOTTAWA HOLIDAYS DATABASE (2025-2027)
 // ═══════════════════════════════════════════════════════════
 const uOttawaHolidays = [
+  // --- Statutory Holidays and Academic Breaks ---
+  { name: "Holiday break", start: "2025-12-22", end: "2026-01-05" },
+  { name: "Family Day", start: "2026-02-16", end: "2026-02-16" },
+  { name: "Reading week (Winter)", start: "2026-02-15", end: "2026-02-21" },
+  { name: "Easter break", start: "2026-04-03", end: "2026-04-06" },
+  { name: "Study break (Winter)", start: "2026-04-16", end: "2026-04-16" },
+  { name: "Victoria Day", start: "2026-05-18", end: "2026-05-18" },
+  { name: "Canada Day", start: "2026-07-01", end: "2026-07-01" },
+  { name: "Civic Holiday", start: "2026-08-03", end: "2026-08-03" },
+  { name: "Labour Day", start: "2026-09-07", end: "2026-09-07" },
+  { name: "Thanksgiving", start: "2026-10-12", end: "2026-10-12" },
+  { name: "Reading week (Fall)", start: "2026-10-25", end: "2026-10-31" },
+  { name: "Holiday break", start: "2026-12-22", end: "2027-01-04" },
+  { name: "Reading week (Winter)", start: "2027-02-14", end: "2027-02-20" },
+  { name: "Family Day", start: "2027-02-15", end: "2027-02-15" },
+  { name: "Easter break", start: "2027-03-26", end: "2027-03-29" },
+  { name: "Study break (Winter)", start: "2027-04-15", end: "2027-04-15" },
+
+  // --- Religious Observances ---
   { name: "Mahayana New Year (Buddhism)", start: "2026-01-03", end: "2026-01-03" },
   { name: "Birth of Guru Gobind Singh Ji (Sikhism)", start: "2026-01-06", end: "2026-01-06" },
   { name: "Christmas (Christianity: Orthodox)", start: "2026-01-06", end: "2026-01-07" },
@@ -681,7 +709,7 @@ document.getElementById('btnCheckHoliday').addEventListener('click', () => {
     box.innerHTML = `<strong>⚠️ Warning:</strong> ${dateStr} falls on:<ul style="padding-left:20px;margin-top:8px;line-height:1.7;">${found.map(c=>`<li>${c}</li>`).join('')}</ul>`;
   } else {
     box.style.cssText = 'display:block;background:#f0fdf4;border:2px solid var(--teal);color:#064e3b;padding:16px;border-radius:10px;margin-top:20px;font-size:.95rem;';
-    box.innerHTML = `<strong>✅ Clear!</strong> No recognized uOttawa holidays fall on ${dateStr}.`;
+    box.innerHTML = `<strong>✅ Clear!</strong> No recognized uOttawa holidays or statutory breaks fall on ${dateStr}.`;
   }
 });
 
