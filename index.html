@@ -925,7 +925,7 @@ async function runAudit(){
     })());
   });
   await Promise.all(promises);
-  auditMetrics.score=Math.max(12,Math.floor(100-(auditMetrics.issuesColor*1.5)-(auditMetrics.issuesTextSize*2)-(auditMetrics.issuesChart)-(auditMetrics.issuesFont)-(auditMetrics.issuesItalic*0.5)));
+  auditMetrics.score=Math.floor(100-(auditMetrics.issuesColor*1.5)-(auditMetrics.issuesTextSize*2)-(auditMetrics.issuesChart)-(auditMetrics.issuesFont)-(auditMetrics.issuesItalic*0.5));
   renderAuditResults();
 }
 
