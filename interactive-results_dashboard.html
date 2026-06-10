@@ -14,14 +14,13 @@
   --muted: rgba(255,255,255,.5); --border: rgba(255,255,255,.07);
 }
 
-/* 1. CHANGED: Lock the body to the viewport height and setup a column layout */
+/* 1. Standard vertical scrolling page */
 html, body { 
   width: 100%; 
-  height: 100vh; 
+  min-height: 100vh; 
   background: var(--bg); 
   color: var(--white); 
   font-family: 'Inter', sans-serif; 
-  overflow: hidden; 
   display: flex;
   flex-direction: column;
 }
@@ -37,52 +36,41 @@ body::before {
 }
 
 /* NAV BARS */
-/* 2. CHANGED: Added flex-shrink: 0 to keep the top elements from compressing */
-#topbar { flex-shrink: 0; position: sticky; top: 0; left: 0; right: 0; height: 60px; z-index: 200; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: rgba(7,13,31,.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+#topbar { position: sticky; top: 0; left: 0; right: 0; height: 60px; z-index: 200; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; background: rgba(7,13,31,.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
 .tb-left { display: flex; align-items: center; gap: 12px; }
 .tb-logo { font-weight: 800; font-size: 1.1em; letter-spacing: 1px; }
 .tb-logo span { color: var(--coral); }
 .tb-divider { width: 1px; height: 20px; background: var(--border); }
 .tb-title { font-size: .9em; color: var(--muted); }
 
-/* HORIZONTAL PAGE LAYOUT */
-/* 3. CHANGED: Converted to a horizontally scrolling flex row */
+/* VERTICAL PAGE LAYOUT */
 #dashboard-container {
-  margin: 10px 0 30px; 
-  padding: 10px 40px 30px;
+  margin: 10px auto 50px; 
+  padding: 10px 40px;
   display: flex; 
-  flex-direction: row; 
+  flex-direction: column; 
   gap: 40px;
-  overflow-x: auto; 
-  overflow-y: hidden;
   flex-grow: 1;
-  align-items: flex-start;
+  align-items: stretch;
   width: 100%;
+  max-width: 1200px;
 }
 
-/* 4. NEW: Styled the horizontal scrollbar */
-#dashboard-container::-webkit-scrollbar { height: 12px; }
-#dashboard-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 8px; margin: 0 40px; }
-#dashboard-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 8px; }
-#dashboard-container::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
-
-/* 5. CHANGED: Fixed width for cards so they line up side-by-side */
+/* FLEXIBLE CARDS */
 .question-card {
   background: var(--card); border: 1px solid var(--border); border-radius: 16px;
   padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;
-  min-width: 900px;
-  max-width: 900px;
-  flex-shrink: 0;
-  max-height: 100%;
-  overflow-y: auto;
+  width: 100%;
 }
+
 @media (max-width: 900px) { 
   .question-card { 
     grid-template-columns: 1fr; 
     gap: 30px; 
-    min-width: 85vw; 
-    max-width: 85vw;
   } 
+  #dashboard-container {
+    padding: 10px 20px;
+  }
 }
 
 .content-col { display: flex; flex-direction: column; gap: 12px; }
@@ -115,13 +103,10 @@ body::before {
 .bar-track { display: flex; height: 36px; width: 100%; background: rgba(0,0,0,0.3); border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
 .bar-segment { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.85em; font-weight: 700; color: #000; overflow: hidden; transition: width 0.5s cubic-bezier(.4,0,.2,1); white-space: nowrap; }
 
-/* HEADER TITLE & BUTTON */
-/* 6. CHANGED: Added flex-shrink: 0 to the header */
-.dashboard-header { flex-shrink: 0; text-align: center; padding: 30px 20px 10px; display: flex; flex-direction: column; align-items: center; }
+/* HEADER TITLE */
+.dashboard-header { text-align: center; padding: 40px 20px 20px; display: flex; flex-direction: column; align-items: center; }
 .dashboard-header h1 { font-size: clamp(2.5em, 5vw, 3.5em); font-weight: 800; color: var(--white); margin-bottom: 10px;}
 .dashboard-header p { color: var(--muted); font-size: 1.1em; max-width: 600px; margin: 0 auto; line-height: 1.6; }
-.export-btn { margin-top: 24px; padding: 12px 24px; font-size: 0.9em; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; background: var(--teal); color: var(--bg); border: none; border-radius: 30px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(0, 229, 196, 0.3); }
-.export-btn:hover { background: #fff; box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4); transform: translateY(-2px); }
 </style>
 
 <script>const dashboardData = [{"id":"q_single_0","type":"single","title":"To what extent do you believe an Equity, Diversity, and Inclusion (EDI) initiative is a priority for SEDTI?","labels":["A great deal","A lot","A moderate amount","A little"],"values":[30.43,30.43,30.43,8.7]},{"id":"q_single_1","type":"single","title":"Before starting the questionnaire, please indicate your current or former employment status at SEDTI.If you have held more than one position with SEDTI, select the position you held for the longest period.Only one answer is possible.","labels":["Part-time and/or adjunct professor.","Tenured, tenure-track or emeritus professor","Administrative and/or technical staff.","Other (please specify):","Part-time professor (short term contract)."],"values":[37.84,27.03,21.62,8.11,5.41]},{"id":"q_single_2","type":"single","title":"My colleagues' behaviour is open and respectful of differences.","labels":["Strongly agree","Agree","I don't know / Not applicable","Disagree"],"values":[54.05,40.54,2.7,2.7]},{"id":"q_single_3","type":"single","title":"SEDTI demonstrates that diversity and inclusion are important to them.","labels":["Strongly agree","Agree","I don't know / Not applicable","Disagree","Neither agree nor disagree"],"values":[54.05,35.14,5.41,2.7,2.7]},{"id":"q_single_4","type":"single","title":"I participate in decision-making that affects the strategic direction of SEDTI.","labels":["Agree","Strongly agree","Disagree","I don't know / Not applicable","Neither agree nor disagree","Strongly disagree"],"values":[24.32,24.32,18.92,13.51,13.51,5.41]},{"id":"q_single_5","type":"single","title":"I feel included in informal activities within SEDTI (for example, lunch breaks, social activities, or other informal networking activities).","labels":["Agree","Strongly agree","Neither agree nor disagree","Disagree","Strongly disagree","I don't know / Not applicable"],"values":[32.43,29.73,21.62,8.11,5.41,2.7]},{"id":"q_single_6","type":"single","title":"I am comfortable raising concerns about SEDTI without fear that it will affect my career development.","labels":["Strongly agree","Agree","Neither agree nor disagree","Disagree","Strongly disagree"],"values":[45.95,27.03,18.92,5.41,2.7]},{"id":"q_single_46","type":"single","title":"Do you currently teach any courses at SEDTI, or have you taught any in the past?","labels":["Yes.","No."],"values":[70.27,29.73]},{"id":"q_single_109","type":"single","title":"Recruitment and promotion practices at SEDTI are transparent and known to all.","labels":["Agree","Strongly agree","Disagree","Neither agree nor disagree","Strongly disagree","I don't know / Not applicable"],"values":[40.54,18.92,16.22,10.81,8.11,5.41]},{"id":"q_single_110","type":"single","title":"Recruitment and promotion practices at SEDTI ensure the equitable treatment of professors and staff, regardless of their characteristics or attributes of diversity.","labels":["Agree","I don't know / Not applicable","Strongly agree","Neither agree nor disagree","Disagree","Strongly disagree"],"values":[32.43,24.32,21.62,13.51,5.41,2.7]},{"id":"q_single_111","type":"single","title":"Opportunities for recognition and outreach are provided equitably by SEDTI (For example, presentations, media interviews, recognition plaques and trophies, and prizes).","labels":["Agree","I don't know / Not applicable","Strongly agree","Disagree","Neither agree nor disagree"],"values":[40.54,27.03,13.51,10.81,8.11]},{"id":"q_single_112","type":"single","title":"I feel that I have the same opportunities to access prestigious functions or important appointments as my colleagues of the same status.","labels":["Agree","Strongly agree","I don't know / Not applicable","Disagree","Neither agree nor disagree","Strongly disagree"],"values":[32.43,21.62,18.92,13.51,10.81,2.7]},{"id":"q_single_120","type":"single","title":"I receive support from SEDTI for balancing my personal and professional life.","labels":["Always","Sometimes","I don't know / Not applicable","Often","Rarely","Never"],"values":[29.73,24.32,21.62,16.22,5.41,2.7]},{"id":"q_single_121","type":"single","title":"I have had to work during my leave time (e.g., vacation, sick leave, or parental leave) to meet work-related expectations.","labels":["Never","Often","I don't know / Not applicable","Always","Rarely","Sometimes"],"values":[24.32,21.62,18.92,13.51,13.51,8.11]},{"id":"q_single_122","type":"single","title":"I have experienced burnout (emotional or mental exhaustion) that has made it difficult for me to disconnect from work during my personal time.","labels":["Never","Sometimes","Often","Rarely","Always","I don't know / Not applicable"],"values":[32.43,29.73,13.51,10.81,8.11,5.41]},{"id":"q_group_0_1","type":"group","title":"I feel valued for my:","subQuestions":[{"subTitle":"research","labels":["I don't know / Not applicable","Agree","Neither agree nor disagree","Strongly agree","Disagree"],"values":[56.76,16.22,13.51,8.11,5.41]},{"subTitle":"teaching","labels":["Strongly agree","Agree","I don't know / Not applicable","Neither agree nor disagree","Disagree"],"values":[37.84,32.43,21.62,5.41,2.7]},{"subTitle":"academic service","labels":["I don't know / Not applicable","Strongly agree","Agree","Neither agree nor disagree","Disagree"],"values":[29.73,29.73,27.03,10.81,2.7]},{"subTitle":"administrative","labels":["I don't know / Not applicable","Strongly agree","Agree","Disagree","Neither agree nor disagree"],"values":[29.73,27.03,24.32,10.81,8.11]}]},{"id":"q_group_0_2","type":"group","title":"Which of these are allocated or distributed equitably at SEDTI:","subQuestions":[{"subTitle":"Excellence scholarships","labels":["I don't know / Not applicable","Agree","Strongly agree","Neither agree nor disagree","Strongly disagree","Disagree"],"values":[64.86,13.51,10.81,5.41,2.7,2.7]},{"subTitle":"Financial aid for students","labels":["I don't know / Not applicable","Agree","Strongly agree","Neither agree nor disagree"],"values":[64.86,16.22,10.81,8.11]},{"subTitle":"Bonuses","labels":["I don't know / Not applicable","Neither agree nor disagree","Strongly agree","Agree"],"values":[78.38,10.81,8.11,2.7]},{"subTitle":"Internal funding (from SEDTI)","labels":["I don't know / Not applicable","Agree","Strongly agree","Neither agree nor disagree","Disagree"],"values":[51.35,16.22,16.22,13.51,2.7]},{"subTitle":"Office/work spaces","labels":["I don't know / Not applicable","Agree","Neither agree nor disagree","Strongly agree","Strongly disagree"],"values":[37.84,27.03,16.22,13.51,5.41]},{"subTitle":"Releases from teaching duties","labels":["I don't know / Not applicable","Agree","Neither agree nor disagree","Strongly agree","Strongly disagree"],"values":[51.35,16.22,16.22,10.81,5.41]},{"subTitle":"Administrative tasks and functions (in terms of complexity, visibility, prestige)","labels":["I don't know / Not applicable","Agree","Neither agree nor disagree","Strongly agree","Disagree"],"values":[35.14,18.92,18.92,18.92,8.11]}]}];</script></head>
@@ -137,7 +122,7 @@ body::before {
 
 <div class="dashboard-header">
   <h1>Equity, Diversity &amp; Inclusion</h1>
-  <p>Scroll horizontally to review the survey insights. <strong>Click the filter tags</strong> to hide specific categories. Remaining items pack together to show their cumulative percentage of the total respondents. <strong>Click any chart</strong> to view a detailed breakdown.</p>
+  <p>Scroll down to review the survey insights. <strong>Click the filter tags</strong> to hide specific categories. Remaining items pack together to show their cumulative percentage of the total respondents. <strong>Click any chart</strong> to view a detailed breakdown.</p>
 </div>
 
 <div id="dashboard-container"></div>
@@ -153,7 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     
-    // Filter out Question 8 if necessary
     let processedData = dashboardData.filter((q, index) => (index + 1) !== 8);
     
     processedData.forEach(q => { hiddenState[q.id] = new Set(); });
@@ -266,7 +250,6 @@ function generateDashboard(data) {
         }
 
         container.insertAdjacentHTML('beforeend', slideContent);
-        // Delay render slightly to ensure DOM is ready
         setTimeout(() => renderChart(q.id), 50);
     });
 }
@@ -281,7 +264,6 @@ function renderChart(qId) {
         if(!area) return;
         const vType = area.dataset.vtype;
 
-        // Calculate absolute and active total to determine percentage
         let absoluteTotal = qData.values.reduce((sum, val) => sum + val, 0);
         let activeTotal = 0;
 
@@ -356,7 +338,6 @@ function renderChart(qId) {
                 const val = sq.values[i];
                 const pct = absoluteTotal > 0 ? ((val / absoluteTotal) * 100).toFixed(1) : 0;
 
-                // Only render items that are visible, this forces them to pack together (no gaps)
                 if (!hidden.has(lbl)) {
                     if (pct > 0) {
                         segmentsHTML += `<div class="bar-segment" style="width: ${pct}%; background: ${color};" title="${lbl}: ${pct}%">${pct >= 4 ? Math.round(pct)+'%' : ''}</div>`;
@@ -463,15 +444,6 @@ window.showChartDetails = function(qId) {
 
 window.addEventListener('resize', () => {
     dashboardData.forEach(q => renderChart(q.id));
-});
-
-// 7. NEW: Quality of life feature! Allows users to use standard vertical mouse wheel to scroll horizontally
-const hzContainer = document.getElementById('dashboard-container');
-hzContainer.addEventListener('wheel', (evt) => {
-    if (evt.deltaY !== 0) {
-        evt.preventDefault();
-        hzContainer.scrollLeft += evt.deltaY;
-    }
 });
 </script>
 </body></html>
