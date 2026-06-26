@@ -5,9 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privilege Walk - Column Race</title>
   
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script>
+    window.onerror = function(msg, url, line) {
+      document.body.innerHTML += '<div style="background: #ffcccc; color: #900; padding: 20px; font-family: sans-serif; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999; border-bottom: 3px solid #900;"><strong>CRITICAL ERROR:</strong> ' + msg + '<br><small>Line: ' + line + '</small></div>';
+      return false;
+    };
+    const originalConsoleError = console.error;
+    console.error = function(...args) {
+      const msg = args.join(' ');
+      if (msg.includes('SyntaxError') || msg.includes('Babel') || msg.includes('React')) {
+        document.body.innerHTML += '<div style="background: #ffcccc; color: #900; padding: 20px; font-family: sans-serif; position: fixed; top: 0; left: 0; width: 100%; z-index: 9999; border-bottom: 3px solid #900;"><strong>COMPILATION ERROR:</strong><br><pre style="white-space: pre-wrap;">' + msg + '</pre></div>';
+      }
+      originalConsoleError.apply(console, args);
+    };
+  </script>
+
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.6/babel.min.js"></script>
 
   <style>
     body {
@@ -17,9 +32,7 @@
       color: #f0f0f0;
       font-family: 'Georgia', serif;
     }
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     @keyframes pulse {
       0% { transform: scale(1); opacity: 1; }
       50% { transform: scale(1.15); opacity: 0.8; }
@@ -54,7 +67,7 @@
     };
   </script>
 
-  <script type="text/babel">
+  <script type="text/babel" data-presets="react,env">
     const { useState, useEffect, useCallback, useRef } = React;
 
     // ─── Constants ───────────────────────────────────────────────────────────────
@@ -181,7 +194,7 @@
         }}>
           
           {hairStyle !== 'bald' && (
-            <>
+            <React.Fragment>
               <div style={{ 
                 ...hairBackgroundObj, 
                 width: '100%', 
@@ -192,19 +205,19 @@
               }}></div>
               
               {hairStyle === 'long' && (
-                <>
+                <React.Fragment>
                   <div style={{ ...hairBackgroundObj, width: '25%', height: '80%', position: 'absolute', top: '10%', left: 0 }}></div>
                   <div style={{ ...hairBackgroundObj, width: '25%', height: '80%', position: 'absolute', top: '10%', right: 0 }}></div>
-                </>
+                </React.Fragment>
               )}
 
               {hairStyle === 'bob' && (
-                <>
+                <React.Fragment>
                   <div style={{ ...hairBackgroundObj, width: '25%', height: '60%', position: 'absolute', top: '10%', left: 0, borderRadius: '0 0 20px 0' }}></div>
                   <div style={{ ...hairBackgroundObj, width: '25%', height: '60%', position: 'absolute', top: '10%', right: 0, borderRadius: '0 0 0 20px' }}></div>
-                </>
+                </React.Fragment>
               )}
-            </>
+            </React.Fragment>
           )}
 
           {/* Facial Hair (Rendered behind lips, masking center to create 'U' shapes) */}
@@ -442,7 +455,6 @@
 
     function CustomizeScreen({ onSave, roomCode, isHost }) {
       const SKIN_COLORS = ["#8d5524", "#c68642", "#e0ac69", "#f1c27d", "#ffdbac"];
-      // Grey and White added to the end of HAIR_COLORS
       const HAIR_COLORS = ["#090806", "#4A2711", "#A56B46", "#F0C858", "#E63946", "#C77DFF", "#555555", "#E0E0E0", "#F5F5F5"];
       const EYE_COLORS = ["#634e34", "#2e536f", "#3d671d", "#1c7847", "#497665", "#000000"];
       const ACCESSORY_COLORS = ["#111111", "#ffffff", "#e63946", "#2a9d8f", "#e9c46a", "#c77dff"];
