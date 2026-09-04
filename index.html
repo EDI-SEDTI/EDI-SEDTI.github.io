@@ -162,6 +162,99 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 .upload-zone h2{font-family:'Fraunces',serif;font-size:1.2rem;margin-bottom:6px;}
 .upload-zone p{color:var(--muted);font-size:.85rem;}
 
+/* ── COLORBLIND ANALYSIS REPORT ── */
+.analysis-report{
+  background:linear-gradient(135deg,#f8fafc 0%,#eff6ff 100%);
+  border:2px solid var(--blue);border-radius:var(--r);
+  padding:28px;margin-bottom:24px;
+}
+
+.report-header{
+  display:flex;align-items:center;gap:16px;margin-bottom:24px;
+}
+
+.status-badge{
+  width:80px;height:80px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fraunces',serif;font-size:2.2rem;font-weight:900;
+  color:#fff;flex-shrink:0;
+  border:4px solid;
+}
+
+.status-badge.critical{background:#7f1d1d;border-color:var(--red);}
+.status-badge.warning{background:#78350f;border-color:var(--orange);}
+.status-badge.good{background:#064e3b;border-color:var(--teal);}
+
+.report-title h2{font-family:'Fraunces',serif;font-size:1.5rem;margin-bottom:6px;color:var(--ink);}
+.report-title p{color:var(--muted);font-size:.9rem;line-height:1.5;}
+
+.issues-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:16px;margin-bottom:28px;
+}
+
+.issue-card{
+  background:var(--card);border-left:5px solid;border-radius:var(--rs);
+  padding:16px;
+}
+
+.issue-card.color{border-color:var(--blue);}
+.issue-card.size{border-color:var(--red);}
+.issue-card.font{border-color:#8b5cf6;}
+.issue-card.italic{border-color:#ec4899;}
+.issue-card.contrast{border-color:var(--orange);}
+
+.issue-value{font-size:1.6rem;font-weight:900;color:var(--ink);margin-bottom:4px;}
+.issue-label{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+
+.recommendations-section{
+  margin-bottom:24px;
+}
+
+.recommendations-title{
+  font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;
+  color:var(--ink);margin-bottom:12px;
+}
+
+.rec-item{
+  background:var(--card);border-radius:var(--rs);padding:14px;
+  margin-bottom:10px;font-size:.9rem;
+  border-left:4px solid var(--blue);
+}
+
+.rec-priority{
+  display:inline-block;padding:2px 8px;border-radius:4px;
+  font-size:.7rem;font-weight:700;text-transform:uppercase;
+  margin-right:8px;
+}
+
+.rec-priority.high{background:#fee2e2;color:#991b1b;}
+.rec-priority.medium{background:#fef3c7;color:#92400e;}
+.rec-priority.low{background:#dbeafe;color:#1e40af;}
+
+.details-section{
+  margin-top:24px;padding-top:24px;border-top:1px solid var(--border);
+}
+
+.detail-subsection{margin-bottom:16px;}
+.detail-subsection h4{
+  font-family:'Fraunces',serif;font-size:.95rem;font-weight:700;
+  color:var(--ink);margin-bottom:8px;
+}
+
+.detail-content{
+  font-size:.85rem;color:var(--muted);line-height:1.6;
+}
+
+.color-examples{
+  display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;
+}
+
+.color-sample{
+  width:40px;height:40px;border-radius:6px;
+  border:2px solid var(--border);
+}
+
 /* ── SCORE / LOGS ── */
 .score-row{display:flex;align-items:center;gap:24px;margin-bottom:20px;}
 .score-circle{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:2rem;font-weight:900;color:#fff;border:5px solid;}
@@ -292,7 +385,7 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
       <div class="mode-card" onclick="setTool('pptx')" tabindex="0" role="button">
         <div class="mode-icon">📊</div>
         <div class="mode-title">PowerPoint File</div>
-        <div class="mode-desc">Audit and auto-fix PPTX color palettes, fonts, italic text, and generate a colorblind simulator.</div>
+        <div class="mode-desc">Audit your PPTX for colorblind accessibility issues and get specific recommendations to fix them.</div>
       </div>
 
       <!-- 4. TEXT EDI AUDITOR -->
@@ -352,25 +445,18 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
   </div>
 
   <div class="panel" id="textPanel">
-    <div class="panel-title">Inclusive Language Scanner (Powered by OpenLLM)</div>
-    <div class="llm-config">
-      <div class="config-row" style="margin-bottom:12px;">
-        <div>
-          <label>OpenLLM Server URL</label>
-          <input type="text" id="llmServerUrl" value="http://localhost:3000" placeholder="e.g. http://localhost:3000"/>
-        </div>
-        <div>
-          <label>Model Name</label>
-          <input type="text" id="llmModelName" value="meta-llama/Llama-3.2-3B-Instruct" placeholder="Model ID"/>
-        </div>
-      </div>
-      <p style="font-size:.8rem;color:var(--muted);line-height:1.5;">Start with: <code style="background:#e2e8f0;padding:2px 6px;border-radius:4px;">openllm serve meta-llama/Llama-3.2-3B-Instruct --port 3000</code></p>
-    </div>
-    <p style="font-size:.9rem;color:var(--muted);margin-bottom:12px;">Paste your document text below to rewrite using EDI terminology.</p>
+    <div class="panel-title">Inclusive Language Scanner</div>
+    <p style="font-size:.9rem;color:var(--muted);margin-bottom:16px;line-height:1.5;">Paste your text below. The tool will detect non-inclusive language and automatically rewrite it with recommended inclusive terminology based on disability language guidelines.</p>
     <textarea id="ediInput" rows="8" style="width:100%;padding:16px;border:2px solid var(--border);border-radius:var(--rs);margin-bottom:16px;font-family:inherit;resize:vertical;font-size:1rem;line-height:1.5;" placeholder="Paste your text here..."></textarea>
-    <button class="btn-primary" id="btnScanText" style="width:auto;padding:12px 24px;border-radius:99px;">✨ Rewrite with OpenLLM</button>
+    <button class="btn-primary" id="btnScanText" style="width:auto;padding:12px 24px;border-radius:99px;">🔍 Scan & Rewrite Text</button>
+    
+    <div id="issuesWrapper" style="display:none;margin-top:20px;">
+      <div class="panel-title" style="color:var(--red);border-bottom:none;">Issues Found</div>
+      <div id="issuesList" style="background:#fef2f2;border:1px solid #fecaca;border-radius:var(--rs);padding:16px;margin-bottom:20px;max-height:250px;overflow-y:auto;"></div>
+    </div>
+    
     <div id="ediOutputWrapper" style="display:none;margin-top:20px;">
-      <div class="panel-title" style="color:var(--teal);border-bottom:none;">Updated Text</div>
+      <div class="panel-title" style="color:var(--teal);border-bottom:none;">✓ Rewritten Text</div>
       <textarea id="ediOutput" rows="8" style="width:100%;padding:16px;border:2px solid var(--teal);background:#f0fdf4;border-radius:var(--rs);font-family:inherit;resize:vertical;font-size:1rem;line-height:1.5;color:var(--ink);" readonly></textarea>
       <button class="btn-primary" id="btnCopyText" style="background:#0f172a;margin-top:12px;">📋 Copy Updated Text</button>
     </div>
@@ -378,45 +464,13 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(-
 
   <div class="upload-zone" id="uploadZonePptx" style="display:none;">
     <input type="file" id="fileInputPptx" accept=".pptx"/>
-    <div class="uicon">📂</div>
+    <div class="uicon">📊</div>
     <h2 id="upTitlePptx">Drop your .pptx file here</h2>
     <p>File is processed securely in your browser</p>
   </div>
 
-  <div class="panel" id="auditPanel">
-    <div class="panel-title">1. Initial Audit Results</div>
-    <div class="score-row">
-      <div class="score-circle" id="initialScoreUI">--</div>
-      <div class="score-text">
-        <h3>Needs Work</h3>
-        <p>We found several accessibility issues in your slides. See the breakdown below.</p>
-      </div>
-    </div>
-    <div class="log-grid" id="auditLogGrid"></div>
-  </div>
-
-  <div class="panel" id="fixPanel">
-    <div class="panel-title">2. Choose Accessible Target & Fix</div>
-    <ul class="rules-list">
-      <li><strong>Avoids Combinations:</strong> Green/Red, Green/Brown, Blue/Purple, Light Green/Yellow, Blue/Gray.</li>
-      <li><strong>Auto-Texture:</strong> Injects lines and hashes into XML charts.</li>
-      <li><strong>Italic Removal:</strong> All italic runs are set to normal.</li>
-      <li><strong>Font Normalization:</strong> All fonts remapped to approved accessible typefaces.</li>
-      <li><strong>Minimum Font Size:</strong> Any text below 18pt is raised to 18pt.</li>
-    </ul>
-    <div class="templates-grid" id="templateGrid"></div>
-    <button class="btn-primary" id="btnFix">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M8 12h8M12 8l4 4-4 4"/></svg>
-      Apply Fixes & Build Simulator
-    </button>
-  </div>
-
-  <div class="panel" id="finalPanel">
-    <div class="panel-title">3. Downloads</div>
-    <div class="btn-grid">
-      <button class="btn-primary" id="btnDownloadPptx" style="background:#0f172a">⬇ Download Accessible PPTX</button>
-      <button class="btn-primary sim-btn" id="btnDownloadSim">👁 Download Colorblind Simulator</button>
-    </div>
+  <div class="panel" id="analysisPanelPptx">
+    <div id="analysisPptxContent"></div>
   </div>
 
   <div class="upload-zone" id="uploadZoneImg" style="display:none;">
@@ -458,7 +512,7 @@ const HERO_TEXT = {
   tools:   { title: 'Accessibility Tools',       desc: 'Select a tool below to audit and improve your documents.' },
   games:   { title: 'Interactive EDI Games',     desc: 'Explore empathy and inclusion through interactive experiences.' },
   surveys: { title: 'Survey Results Dashboard',  desc: 'Explore the data and insights gathered from our community surveys.' },
-  pptx:    { title: 'Audit & Fix PowerPoint',    desc: 'Fix unsafe colors, italic text, non-standard fonts, and small text sizes.' },
+  pptx:    { title: 'Colorblind Accessibility Analyzer',    desc: 'Upload your presentation to get a detailed analysis of colorblind accessibility issues and specific recommendations.' },
   image:   { title: 'Texturize Charts & Maps',   desc: 'Upload an image to detect colors and apply accessible textures.' },
   text:    { title: 'EDI Text Auditor',          desc: 'Scan and update text to ensure inclusive language using OpenLLM.' },
   holiday: { title: 'Deadline Auditor',          desc: 'Ensure deadlines respect religious observances and statutory breaks on uOttawa\'s calendar.' },
@@ -466,7 +520,7 @@ const HERO_TEXT = {
 
 const BADGE_TEXT = {
   home: 'Home', tools: 'Tools', games: 'Games', surveys: 'Surveys',
-  pptx: 'PPTX Mode', image: 'Image Mode', text: 'Text Mode', holiday: 'Holiday Mode'
+  pptx: 'PPTX Analyzer', image: 'Image Mode', text: 'Text Mode', holiday: 'Holiday Mode'
 };
 
 function setHero(key) {
@@ -480,7 +534,7 @@ function hideAllViews() {
 }
 
 function hideAllToolPanels() {
-  ['holidayPanel','textPanel','uploadZonePptx','auditPanel','fixPanel','finalPanel','uploadZoneImg','imagePanel','loading'].forEach(id => {
+  ['holidayPanel','textPanel','uploadZonePptx','analysisPanelPptx','uploadZoneImg','imagePanel','loading'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
@@ -714,42 +768,181 @@ document.getElementById('btnCheckHoliday').addEventListener('click', () => {
 });
 
 // ═══════════════════════════════════════════════════════════
-//  EDI TEXT — OpenLLM
+//  INCLUSIVE LANGUAGE DICTIONARY
 // ═══════════════════════════════════════════════════════════
-document.getElementById('btnScanText').addEventListener('click', async () => {
+const INCLUSIVE_LANGUAGE_MAP = [
+  // Disability terminology
+  { avoid: /\bdisabled person\b/gi, recommend: 'person with disability' },
+  { avoid: /\bhandicapped\b/gi, recommend: 'person with disability' },
+  { avoid: /\bperson with special needs\b/gi, recommend: 'person with disability' },
+  { avoid: /\bhandicapable\b/gi, recommend: 'person with disability' },
+  { avoid: /\batypical\b/gi, recommend: 'person with disability' },
+  { avoid: /\bdifferently abled\b/gi, recommend: 'person with disability' },
+  { avoid: /\bpeople of all abilities\b/gi, recommend: 'people with and without disabilities' },
+  { avoid: /\bpeople of determination\b/gi, recommend: 'person with disability' },
+  
+  // Ability status
+  { avoid: /\bnormal person\b/gi, recommend: 'person without disability' },
+  { avoid: /\bhealthy person\b/gi, recommend: 'person without disability' },
+  { avoid: /\nable-bodied\b/gi, recommend: 'person without disability' },
+  { avoid: /\btypical person\b/gi, recommend: 'person without disability' },
+  { avoid: /\bwhole person\b/gi, recommend: 'person without disability' },
+  
+  // Suffering language
+  { avoid: /\bsuffer(?:ing|s) from\b/gi, recommend: 'have' },
+  { avoid: /\bafflicted by\b/gi, recommend: 'have' },
+  { avoid: /\bstricken by\b/gi, recommend: 'have' },
+  { avoid: /\btroubled with\b/gi, recommend: 'have' },
+  
+  // Intellectual disability
+  { avoid: /\bretarded\b/gi, recommend: 'person with an intellectual disability' },
+  { avoid: /\bsimple(?:\s+person)?\b/gi, recommend: 'person with an intellectual disability' },
+  { avoid: /\bslow(?:\s+person)?\b/gi, recommend: 'person with an intellectual disability' },
+  { avoid: /\bbrain.?damaged\b/gi, recommend: 'person with an intellectual disability' },
+  { avoid: /\bintellectually challenged\b/gi, recommend: 'person with an intellectual disability' },
+  { avoid: /\bsubnormal\b/gi, recommend: 'person with an intellectual disability' },
+  { avoid: /\bof unsound mind\b/gi, recommend: 'person with an intellectual disability' },
+  { avoid: /\bfeeble.?minded\b/gi, recommend: 'person with an intellectual disability' },
+  { avoid: /\bmentally handicapped\b/gi, recommend: 'person with an intellectual disability' },
+  
+  // Psychosocial disability
+  { avoid: /\binsane\b/gi, recommend: 'person with a psychosocial disability' },
+  { avoid: /\bcrazy\b/gi, recommend: 'person with a psychosocial disability' },
+  { avoid: /\bmaniac\b/gi, recommend: 'person with a psychosocial disability' },
+  { avoid: /\bpsycho\b/gi, recommend: 'person with a psychosocial disability' },
+  { avoid: /\bhypersensitive\b/gi, recommend: 'person with a psychosocial disability' },
+  { avoid: /\blunatic\b/gi, recommend: 'person with a psychosocial disability' },
+  { avoid: /\bdemented\b/gi, recommend: 'person with a psychosocial disability' },
+  { avoid: /\bpanicked\b/gi, recommend: 'person with a psychosocial disability' },
+  { avoid: /\bagitated\b/gi, recommend: 'person with a psychosocial disability' },
+  { avoid: /\bmentally deranged\b/gi, recommend: 'person with a psychosocial disability' },
+  { avoid: /\bmentally ill\b/gi, recommend: 'person with a psychosocial disability' },
+  
+  // Deaf/hearing
+  { avoid: /\bthe deaf\b/gi, recommend: 'deaf person' },
+  { avoid: /\bhearing impaired\b/gi, recommend: 'person with hearing loss' },
+  { avoid: /\bdeaf and dumb\b/gi, recommend: 'deaf person' },
+  { avoid: /\bdeaf and mute\b/gi, recommend: 'deaf person' },
+  
+  // Blind/vision
+  { avoid: /\bthe blind\b/gi, recommend: 'blind person' },
+  { avoid: /\bpartially.?sighted\b/gi, recommend: 'person with low vision' },
+  
+  // Physical disability
+  { avoid: /\bcrippled\b/gi, recommend: 'person with a physical disability' },
+  { avoid: /\binvalid\b/gi, recommend: 'person with a physical disability' },
+  { avoid: /\bdeformed\b/gi, recommend: 'person with a physical disability' },
+  { avoid: /\blame\b/gi, recommend: 'person with a physical disability' },
+  { avoid: /\bphysically challenged\b/gi, recommend: 'person with a physical disability' },
+  { avoid: /\bphysical limitations\b/gi, recommend: 'person with a physical disability' },
+  
+  // Wheelchair
+  { avoid: /\bwheelchair.?bound\b/gi, recommend: 'person who uses a wheelchair' },
+  { avoid: /\bconfined to a wheelchair\b/gi, recommend: 'person who uses a wheelchair' },
+  { avoid: /\brestricted to a wheelchair\b/gi, recommend: 'person who uses a wheelchair' },
+  
+  // Short stature
+  { avoid: /\bmidget\b/gi, recommend: 'person of short stature' },
+  { avoid: /\bdwarf\b/gi, recommend: 'person of short stature' },
+  { avoid: /\bstunted\b/gi, recommend: 'person of short stature' },
+  
+  // Specific conditions
+  { avoid: /\bmongoliod\b/gi, recommend: 'person with Down syndrome' },
+  { avoid: /\bdown person\b/gi, recommend: 'person with Down syndrome' },
+  { avoid: /\balbino\b/gi, recommend: 'person with albinism' },
+  { avoid: /\bleper\b/gi, recommend: 'person affected by leprosy' },
+  { avoid: /\bleprosy patient\b/gi, recommend: 'person affected by leprosy' },
+  
+  // Communication
+  { avoid: /\bnon.?verbal\b/gi, recommend: 'person who uses an alternative method of communication' },
+  { avoid: /\bcan't talk\b/gi, recommend: 'person who uses an alternative method of communication' },
+  { avoid: /\bcannot talk\b/gi, recommend: 'person who uses an alternative method of communication' },
+  
+  // Parking/accessibility
+  { avoid: /\bdisabled parking\b/gi, recommend: 'accessible parking' },
+  { avoid: /\bhandicapped parking\b/gi, recommend: 'accessible parking' },
+  { avoid: /\bdisabled bathroom\b/gi, recommend: 'accessible bathroom' },
+  { avoid: /\bhandicapped bathroom\b/gi, recommend: 'accessible bathroom' }
+];
+
+// ═══════════════════════════════════════════════════════════
+//  INCLUSIVE LANGUAGE SCANNER
+// ═══════════════════════════════════════════════════════════
+function scanAndRewriteText(inputText) {
+  let rewrittenText = inputText;
+  const foundIssues = [];
+  
+  INCLUSIVE_LANGUAGE_MAP.forEach(rule => {
+    const matches = inputText.match(rule.avoid);
+    if (matches) {
+      matches.forEach(match => {
+        foundIssues.push({
+          found: match,
+          recommended: rule.recommend
+        });
+      });
+      rewrittenText = rewrittenText.replace(rule.avoid, rule.recommend);
+    }
+  });
+  
+  // Remove duplicates from issues
+  const uniqueIssues = [];
+  const seen = new Set();
+  foundIssues.forEach(issue => {
+    const key = issue.found.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueIssues.push(issue);
+    }
+  });
+  
+  return { rewrittenText, issues: uniqueIssues };
+}
+
+document.getElementById('btnScanText').addEventListener('click', () => {
   const inputText = document.getElementById('ediInput').value;
-  if (!inputText.trim()) { showToast("⚠ Please enter some text to scan."); return; }
-  const serverUrl = (document.getElementById('llmServerUrl').value || 'http://localhost:3000').replace(/\/$/,'');
-  const modelName = document.getElementById('llmModelName').value || 'meta-llama/Llama-3.2-3B-Instruct';
+  if (!inputText.trim()) { 
+    showToast("⚠ Please enter some text to scan."); 
+    return; 
+  }
+
   const btn = document.getElementById('btnScanText');
   const orig = btn.innerHTML;
-  btn.innerHTML = `<span class="spin" style="width:16px;height:16px;border-width:2px;display:inline-block;margin-right:8px;vertical-align:middle;"></span> Calling OpenLLM...`;
+  btn.innerHTML = `<span class="spin" style="width:16px;height:16px;border-width:2px;display:inline-block;margin-right:8px;vertical-align:middle;"></span> Scanning...`;
   btn.disabled = true;
-  document.getElementById('ediOutputWrapper').style.display = 'none';
-  try {
-    const res = await fetch(`${serverUrl}/v1/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [
-          { role: 'system', content: `You are an EDI language expert. Rewrite text to be inclusive, respectful, and accessible. Apply gender-neutral language, person-first disability language, remove ableist/racially biased terminology and microaggressions. Return ONLY the rewritten text.` },
-          { role: 'user', content: `Rewrite using inclusive EDI-friendly language:\n\n${inputText}` }
-        ],
-        max_tokens: 2048, temperature: 0.3
-      })
-    });
-    if (!res.ok) throw new Error(`OpenLLM API error ${res.status}`);
-    const data = await res.json();
-    const rewritten = data.choices?.[0]?.message?.content?.trim();
-    if (!rewritten) throw new Error('Empty response from model.');
-    document.getElementById('ediOutput').value = rewritten;
-    document.getElementById('ediOutputWrapper').style.display = 'block';
-    showToast('✨ OpenLLM rewrite complete!');
-  } catch(e) {
-    showToast(`⚠ ${e.message.includes('fetch') ? 'Cannot reach OpenLLM server.' : e.message}`);
-  } finally { btn.innerHTML = orig; btn.disabled = false; }
+
+  setTimeout(() => {
+    try {
+      const result = scanAndRewriteText(inputText);
+      
+      document.getElementById('ediOutput').value = result.rewrittenText;
+      
+      if (result.issues.length > 0) {
+        const issuesList = document.getElementById('issuesList');
+        issuesList.innerHTML = result.issues.map(issue => `
+          <div style="background:#fff;border:1px solid #fca5a5;border-radius:6px;padding:10px;margin-bottom:8px;font-size:.85rem;">
+            <div style="color:#991b1b;font-weight:600;">❌ "${issue.found}"</div>
+            <div style="color:#7f1d1d;margin-top:4px;">→ Use: "<strong>${issue.recommended}</strong>" instead</div>
+          </div>
+        `).join('');
+        document.getElementById('issuesWrapper').style.display = 'block';
+        showToast(`⚠ Found ${result.issues.length} non-inclusive phrase(s)`);
+      } else {
+        document.getElementById('issuesWrapper').style.display = 'none';
+        showToast('✅ No non-inclusive language detected!');
+      }
+      
+      document.getElementById('ediOutputWrapper').style.display = 'block';
+      document.getElementById('ediOutputWrapper').scrollIntoView({ behavior: 'smooth' });
+    } catch(e) {
+      showToast(`⚠ Error: ${e.message}`);
+    } finally { 
+      btn.innerHTML = orig; 
+      btn.disabled = false; 
+    }
+  }, 300);
 });
+
 document.getElementById('btnCopyText').addEventListener('click', () => {
   document.getElementById('ediOutput').select();
   document.execCommand('copy');
@@ -880,97 +1073,9 @@ document.getElementById('btnDownloadImg').addEventListener('click', () => {
 });
 
 // ═══════════════════════════════════════════════════════════
-//  PPTX PROCESSING
+//  PPTX COLORBLIND ANALYSIS
 // ═══════════════════════════════════════════════════════════
-const APPROVED_SANS=['Arial','Calibri','Futura','Helvetica','Montserrat','Open Sans','Roboto','Tahoma'];
-const APPROVED_SERIF=['Times New Roman','Georgia'];
-const ALL_APPROVED=[...APPROVED_SANS,...APPROVED_SERIF];
-const KNOWN_SERIFS=['times','georgia','garamond','palatino','book antiqua','cambria','constantia','didot','caslon','baskerville','bodoni','century','goudy','minion','sabon','trajan','perpetua','courier','courier new'];
-
-function normalizeFont(f){
-  if(!f)return'Calibri';
-  const l=f.toLowerCase();
-  for(const a of ALL_APPROVED)if(l===a.toLowerCase())return f;
-  for(const s of KNOWN_SERIFS)if(l.includes(s))return'Georgia';
-  return'Calibri';
-}
-
-const TEMPLATES={
-  universal:{id:'universal',name:'High Contrast Default',colors:['000000','1E40AF','D97706','FFFFFF','4B5563','FACC15']},
-  blueOrange:{id:'blueOrange',name:'Protan/Deutan Safe',colors:['0F172A','2563EB','F59E0B','F8FAFC','64748B','38BDF8']},
-  monoTexture:{id:'monoTexture',name:'Monochrome Textures',colors:['111827','374151','6B7280','9CA3AF','E5E7EB','FFFFFF']}
-};
-
-let activeTemplateId='universal',loadedZip=null,processedBlob=null,simulatedBlob=null,originalBuffer=null,originalFilename='presentation.pptx';
-let auditMetrics={issuesColor:0,issuesTextSize:0,issuesFont:0,issuesItalic:0,issuesChart:0,score:100};
-
-const tmplGrid=document.getElementById('templateGrid');
-Object.values(TEMPLATES).forEach(tmpl=>{
-  const card=document.createElement('div');
-  card.className=`tmpl-card ${tmpl.id===activeTemplateId?'active':''}`;
-  card.innerHTML=`<div class="tmpl-header"><div class="tmpl-title">${tmpl.name}</div><div class="tmpl-swatches">${tmpl.colors.map(c=>`<div class="swatch" style="background:#${c}"></div>`).join('')}</div></div>`;
-  card.onclick=()=>{document.querySelectorAll('.tmpl-card').forEach(c=>c.classList.remove('active'));card.classList.add('active');activeTemplateId=tmpl.id;};
-  tmplGrid.appendChild(card);
-});
-
-const zonePptx=document.getElementById('uploadZonePptx');
-const inputPptx=document.getElementById('fileInputPptx');
-['dragover','dragenter'].forEach(e=>zonePptx.addEventListener(e,ev=>{ev.preventDefault();zonePptx.classList.add('over');}));
-['dragleave','dragend','drop'].forEach(e=>zonePptx.addEventListener(e,ev=>{ev.preventDefault();zonePptx.classList.remove('over');}));
-zonePptx.addEventListener('drop',ev=>{if(ev.dataTransfer.files[0])handleUploadPptx(ev.dataTransfer.files[0]);});
-inputPptx.addEventListener('change',()=>{if(inputPptx.files[0])handleUploadPptx(inputPptx.files[0]);});
-
-async function handleUploadPptx(file){
-  if(!file.name.toLowerCase().endsWith('.pptx')){showToast('⚠ Please upload a .pptx file');return;}
-  originalFilename=file.name;
-  document.getElementById('upTitlePptx').textContent=file.name;
-  showLoading('Auditing presentation structure...');
-  try{
-    originalBuffer=await file.arrayBuffer();
-    loadedZip=await JSZip.loadAsync(originalBuffer);
-    await runAudit();
-  }catch(err){showToast('⚠ Error: '+err.message);}
-  hideLoading();
-}
-
-async function runAudit(){
-  auditMetrics={issuesColor:0,issuesTextSize:0,issuesFont:0,issuesItalic:0,issuesChart:0,score:100};
-  const promises=[];
-  loadedZip.forEach((rp,ze)=>{
-    promises.push((async()=>{
-      if(ze.dir)return;
-      if(!rp.endsWith('.xml')||rp.includes('bin'))return;
-      const c=await ze.async('text');
-      const hexM=c.match(/val="[0-9A-Fa-f]{6}"/g);
-      if(hexM)auditMetrics.issuesColor+=Math.floor(hexM.length/5);
-      const szM=c.match(/sz="(\d+)"/g);
-      if(szM)szM.forEach(m=>{const sz=parseInt(m.replace(/\D/g,''));if(sz>0&&sz<1800)auditMetrics.issuesTextSize++;});
-      const fM=c.match(/typeface="([^"]+)"/g);
-      if(fM)fM.forEach(m=>{const f=m.match(/typeface="([^"]+)"/)?.[1]||'';if(f&&f!=='+mj-lt'&&f!=='+mn-lt'&&normalizeFont(f)!==f)auditMetrics.issuesFont++;});
-      const iM=c.match(/\bi="1"\b/g);
-      if(iM)auditMetrics.issuesItalic+=iM.length;
-      if(rp.includes('ppt/charts/chart')){const fll=c.match(/<a:solidFill>/g);if(fll)auditMetrics.issuesChart+=fll.length;}
-    })());
-  });
-  await Promise.all(promises);
-  auditMetrics.score=Math.floor(100-(auditMetrics.issuesColor*1.5)-(auditMetrics.issuesTextSize*2)-(auditMetrics.issuesChart)-(auditMetrics.issuesFont)-(auditMetrics.issuesItalic*0.5));
-  renderAuditResults();
-}
-
-function renderAuditResults(){
-  const sc=document.getElementById('initialScoreUI');
-  sc.textContent=auditMetrics.score;
-  sc.className='score-circle '+(auditMetrics.score>85?'good':auditMetrics.score>60?'warn':'bad');
-  document.getElementById('auditLogGrid').innerHTML=`
-    <div class="log-item" style="border-color:var(--blue)"><div class="val">${auditMetrics.issuesColor}</div><div class="lbl">Unsafe Colors</div></div>
-    <div class="log-item" style="border-color:var(--orange)"><div class="val">${auditMetrics.issuesChart}</div><div class="lbl">Untextured Charts</div></div>
-    <div class="log-item" style="border-color:var(--red)"><div class="val">${auditMetrics.issuesTextSize}</div><div class="lbl">Small Text &lt;18pt</div></div>
-    <div class="log-item" style="border-color:#8b5cf6"><div class="val">${auditMetrics.issuesFont}</div><div class="lbl">Non-Standard Fonts</div></div>
-    <div class="log-item" style="border-color:#ec4899"><div class="val">${auditMetrics.issuesItalic}</div><div class="lbl">Italic Runs</div></div>`;
-  document.getElementById('uploadZonePptx').style.display='none';
-  document.getElementById('auditPanel').style.display='block';
-  document.getElementById('fixPanel').style.display='block';
-}
+const APPROVED_FONTS = ['Arial','Calibri','Futura','Helvetica','Montserrat','Open Sans','Roboto','Tahoma','Times New Roman','Georgia'];
 
 function colorDistance(h1,h2){
   const r1=parseInt(h1.slice(0,2),16),g1=parseInt(h1.slice(2,4),16),b1=parseInt(h1.slice(4,6),16);
@@ -979,109 +1084,303 @@ function colorDistance(h1,h2){
   return Math.sqrt((((512+rm)*r*r)>>8)+4*g*g+(((767-rm)*b*b)>>8));
 }
 
-function getClosestSafeColor(src,colors){
-  const hex=src.toUpperCase().replace(/[^0-9A-F]/g,'');
-  if(hex.length!==6)return null;
-  const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
-  const lum=(0.2126*r+0.7152*g+0.0722*b)/255;
-  if(lum>0.92)return'FFFFFF';if(lum<0.05)return'000000';
-  let cl=colors[0],md=Infinity;
-  for(const s of colors){const d=colorDistance(hex,s);if(d<md){md=d;cl=s;}}
-  return cl;
-}
+let pptxAnalysis = {
+  filename: '',
+  colorIssues: 0,
+  fontSizeIssues: 0,
+  fontTypeIssues: 0,
+  italicIssues: 0,
+  contrastIssues: 0,
+  detectedColors: new Set(),
+  detectedFonts: new Set(),
+  problematicPairs: []
+};
 
-function simulateProtanopia(hex){
-  const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
-  const th=c=>Math.min(255,Math.max(0,Math.round(c))).toString(16).padStart(2,'0').toUpperCase();
-  return th(0.56667*r+0.43333*g)+th(0.55833*r+0.44167*g)+th(0.24167*g+0.75833*b);
-}
+async function analyzePptx(arrayBuffer) {
+  try {
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    pptxAnalysis = {
+      filename: '',
+      colorIssues: 0,
+      fontSizeIssues: 0,
+      fontTypeIssues: 0,
+      italicIssues: 0,
+      contrastIssues: 0,
+      detectedColors: new Set(),
+      detectedFonts: new Set(),
+      problematicPairs: []
+    };
 
-function fixItalics(x){return x.replace(/(<a:rPr\b[^>]*?)\s+i="1"([^>]*?>)/g,'$1$2');}
-function fixFonts(x){return x.replace(/(<a:(?:latin|ea|cs)\s+typeface=")([^"]+)(")/g,(m,p,f,po)=>{if(f==='+mj-lt'||f==='+mn-lt'||f==='+mj-ea'||f==='+mn-ea')return m;return`${p}${normalizeFont(f)}${po}`;});}
-function fixFontSizes(x){return x.replace(/(<a:rPr\b[^>]*?\bsz=")(\d+)(")/g,(m,p,s,po)=>parseInt(s)<1800?`${p}1800${po}`:m);}
+    const promises = [];
+    zip.forEach((relativePath, zipEntry) => {
+      if (zipEntry.dir || !relativePath.endsWith('.xml') || relativePath.includes('bin')) return;
+      
+      promises.push((async () => {
+        const content = await zipEntry.async('text');
+        
+        const colorMatches = content.match(/(val|lastClr)="([0-9A-Fa-f]{6})"/g) || [];
+        colorMatches.forEach(match => {
+          const hex = match.match(/"([0-9A-Fa-f]{6})"/)[1];
+          pptxAnalysis.detectedColors.add('#' + hex.toUpperCase());
+          pptxAnalysis.colorIssues++;
+        });
 
-function processStandardXML(x,colors){
-  let o=x.replace(/(<[a-zA-Z0-9:]*?(?:[cC]lr|clrVal)\b[^>]*?\b(?:val|lastClr)=")([0-9A-Fa-f]{6})(")/g,(m,p,h,po)=>{const s=getClosestSafeColor(h,colors);return s?`${p}${s}${po}`:m;});
-  return fixFonts(fixItalics(fixFontSizes(o)));
-}
+        const fontMatches = content.match(/typeface="([^"]+)"/g) || [];
+        fontMatches.forEach(match => {
+          const font = match.match(/typeface="([^"]+)"/)[1];
+          if (font && font !== '+mj-lt' && font !== '+mn-lt') {
+            pptxAnalysis.detectedFonts.add(font);
+            if (!APPROVED_FONTS.includes(font)) {
+              pptxAnalysis.fontTypeIssues++;
+            }
+          }
+        });
 
-function processChartTextures(x){
-  const pats=['diagStripe','smGrid','pct25','wdUpwardDiag','trellis'];let pi=0;
-  return x.replace(/<a:solidFill>([\s\S]*?)<\/a:solidFill>/g,(m,inner)=>{
-    if(!inner.includes('Clr'))return m;
-    const p=pats[pi++%pats.length];
-    return`<a:pattFill prst="${p}"><a:fgClr>${inner}</a:fgClr><a:bgClr><a:srgbClr val="FFFFFF"/></a:bgClr></a:pattFill>`;
-  });
-}
+        const sizeMatches = content.match(/sz="(\d+)"/g) || [];
+        sizeMatches.forEach(match => {
+          const size = parseInt(match.replace(/\D/g, ''));
+          if (size > 0 && size < 1800) {
+            pptxAnalysis.fontSizeIssues++;
+          }
+        });
 
-function processThemeXML(x,colors){
-  let o=x;
-  for(let i=1;i<=6;i++){
-    const ts=`<a:accent${i}>`,te=`</a:accent${i}>`;
-    let si=o.indexOf(ts),ei=o.indexOf(te,si);
-    if(si!==-1&&ei!==-1){
-      let bl=o.substring(si,ei).replace(/(val|lastClr)="[0-9A-Fa-f]{6}"/g,`$1="${colors[(i-1)%colors.length]}"`);
-      o=o.substring(0,si)+bl+o.substring(ei);
-    }
-  }
-  return fixFonts(fixItalics(fixFontSizes(o)));
-}
+        const italicMatches = content.match(/\bi="1"\b/g) || [];
+        pptxAnalysis.italicIssues += italicMatches.length;
 
-function processSimulatedXML(x){return x.replace(/(val|lastClr)="([0-9A-Fa-f]{6})"/g,(m,a,h)=>`${a}="${simulateProtanopia(h)}"`);}
-
-document.getElementById('btnFix').addEventListener('click',async()=>{
-  if(!originalBuffer)return;
-  document.getElementById('btnFix').disabled=true;
-  showLoading('Applying all fixes...');
-  document.getElementById('finalPanel').style.display='none';
-  try{
-    const outZip=await JSZip.loadAsync(originalBuffer);
-    const simZip=await JSZip.loadAsync(originalBuffer);
-    const colors=TEMPLATES[activeTemplateId].colors;
-    const ps=[];
-    outZip.forEach((rp,ze)=>{
-      ps.push((async()=>{
-        if(ze.dir||!rp.endsWith('.xml')||rp.includes('bin'))return;
-        const oc=await ze.async('text');
-        let fc=oc,sc=processSimulatedXML(oc);
-        if(rp.includes('ppt/theme/theme'))fc=processThemeXML(oc,colors);
-        else if(rp.includes('ppt/charts/chart'))fc=processStandardXML(processChartTextures(oc),colors);
-        else fc=processStandardXML(oc,colors);
-        outZip.file(rp,fc);simZip.file(rp,sc);
+        if (relativePath.includes('ppt/charts/chart')) {
+          const chartFills = content.match(/<a:solidFill>/g) || [];
+          pptxAnalysis.contrastIssues += chartFills.length;
+        }
       })());
     });
-    await Promise.all(ps);
-    document.getElementById('loadingMsg').textContent='Zipping files...';
-    const mtype='application/vnd.openxmlformats-officedocument.presentationml.presentation';
-    processedBlob=await outZip.generateAsync({type:'blob',mimeType:mtype});
-    simulatedBlob=await simZip.generateAsync({type:'blob',mimeType:mtype});
-    hideLoading();
-    document.getElementById('finalPanel').style.display='block';
-    document.getElementById('finalPanel').scrollIntoView({behavior:'smooth'});
-    showToast('✦ Done! Italics fixed, fonts normalized, sizes enforced.');
-  }catch(err){hideLoading();showToast('⚠ Error: '+err.message);}
-  document.getElementById('btnFix').disabled=false;
+
+    await Promise.all(promises);
+    
+    const colors = Array.from(pptxAnalysis.detectedColors);
+    for (let i = 0; i < colors.length; i++) {
+      for (let j = i + 1; j < colors.length; j++) {
+        const dist = colorDistance(colors[i].slice(1), colors[j].slice(1));
+        if (dist < 100) {
+          pptxAnalysis.problematicPairs.push({
+            color1: colors[i],
+            color2: colors[j],
+            distance: dist
+          });
+        }
+      }
+    }
+
+    return pptxAnalysis;
+  } catch (err) {
+    throw new Error('Could not analyze PPTX: ' + err.message);
+  }
+}
+
+function generateAnalysisReport(analysis) {
+  const score = 100 - Math.min(100, 
+    (analysis.colorIssues * 1) + 
+    (analysis.fontSizeIssues * 2) + 
+    (analysis.fontTypeIssues * 0.5) + 
+    (analysis.italicIssues * 0.3) + 
+    (analysis.contrastIssues * 1.5)
+  );
+
+  let statusClass = 'good';
+  let statusLabel = '✓ Accessible';
+  if (score < 50) { statusClass = 'critical'; statusLabel = '⚠ Critical'; }
+  else if (score < 75) { statusClass = 'warning'; statusLabel = '△ Issues Found'; }
+
+  const report = `
+    <div class="analysis-report">
+      <div class="report-header">
+        <div class="status-badge ${statusClass}">${Math.round(score)}</div>
+        <div class="report-title">
+          <h2>${statusLabel}</h2>
+          <p>${analysis.colorIssues + analysis.fontSizeIssues + analysis.fontTypeIssues + analysis.italicIssues + analysis.contrastIssues} accessibility issues detected</p>
+        </div>
+      </div>
+
+      <div class="issues-grid">
+        <div class="issue-card color">
+          <div class="issue-value">${analysis.colorIssues}</div>
+          <div class="issue-label">Color Instances</div>
+        </div>
+        <div class="issue-card size">
+          <div class="issue-value">${analysis.fontSizeIssues}</div>
+          <div class="issue-label">Small Text</div>
+        </div>
+        <div class="issue-card font">
+          <div class="issue-value">${analysis.fontTypeIssues}</div>
+          <div class="issue-label">Non-Standard Fonts</div>
+        </div>
+        <div class="issue-card italic">
+          <div class="issue-value">${analysis.italicIssues}</div>
+          <div class="issue-label">Italic Text</div>
+        </div>
+        <div class="issue-card contrast">
+          <div class="issue-value">${analysis.contrastIssues}</div>
+          <div class="issue-label">Chart Elements</div>
+        </div>
+      </div>
+
+      <div class="recommendations-section">
+        <div class="recommendations-title">🎯 Priority Recommendations</div>
+        ${analysis.colorIssues > 0 ? `
+          <div class="rec-item">
+            <span class="rec-priority high">High</span>
+            <strong>Color Palette Review:</strong> You have ${analysis.colorIssues} color instances. Replace with a colorblind-safe palette. Avoid red-green combinations. Test with Deuteranopia and Protanopia simulators.
+          </div>
+        ` : ''}
+        ${analysis.fontSizeIssues > 0 ? `
+          <div class="rec-item">
+            <span class="rec-priority high">High</span>
+            <strong>Increase Minimum Font Size:</strong> ${analysis.fontSizeIssues} text instances are below 18pt. Increase all body text to 18pt minimum, headers to 24pt.
+          </div>
+        ` : ''}
+        ${analysis.fontTypeIssues > 0 ? `
+          <div class="rec-item">
+            <span class="rec-priority medium">Medium</span>
+            <strong>Standardize Fonts:</strong> ${analysis.fontTypeIssues} instances use non-standard fonts. Use: Arial, Calibri, Helvetica, Roboto, or Georgia.
+          </div>
+        ` : ''}
+        ${analysis.italicIssues > 0 ? `
+          <div class="rec-item">
+            <span class="rec-priority medium">Medium</span>
+            <strong>Remove Italic Text:</strong> ${analysis.italicIssues} italic runs found. Use bold weight instead—italics are harder to read for dyslexic viewers.
+          </div>
+        ` : ''}
+        ${analysis.contrastIssues > 0 ? `
+          <div class="rec-item">
+            <span class="rec-priority high">High</span>
+            <strong>Add Texture Patterns to Charts:</strong> ${analysis.contrastIssues} chart elements lack texture. Add diagonal lines, hashes, or cross-hatching to distinguish colors.
+          </div>
+        ` : ''}
+      </div>
+
+      <div class="details-section">
+        <div class="detail-subsection">
+          <h4>📊 Detected Colors (${analysis.detectedColors.size} unique)</h4>
+          <div class="color-examples">
+            ${Array.from(analysis.detectedColors).slice(0, 12).map(color => `
+              <div class="color-sample" style="background-color:${color};" title="${color}"></div>
+            `).join('')}
+            ${analysis.detectedColors.size > 12 ? `<div style="padding:8px;color:var(--muted);font-size:.8rem;">+${analysis.detectedColors.size - 12} more</div>` : ''}
+          </div>
+        </div>
+
+        <div class="detail-subsection">
+          <h4>🔤 Detected Fonts (${analysis.detectedFonts.size} unique)</h4>
+          <div class="detail-content">
+            ${Array.from(analysis.detectedFonts).slice(0, 8).map(font => `<div style="padding:4px 0;">• ${font}</div>`).join('')}
+            ${analysis.detectedFonts.size > 8 ? `<div style="padding:4px 0;color:var(--muted);">+ ${analysis.detectedFonts.size - 8} more fonts</div>` : ''}
+          </div>
+        </div>
+
+        ${analysis.problematicPairs.length > 0 ? `
+          <div class="detail-subsection">
+            <h4>⚠️ Problematic Color Pairs</h4>
+            <div class="detail-content">
+              ${analysis.problematicPairs.slice(0, 5).map((pair, i) => `
+                <div style="padding:8px 0;display:flex;align-items:center;gap:12px;">
+                  <div style="font-size:.8rem;color:var(--muted);">Pair ${i + 1}</div>
+                  <div class="color-sample" style="background-color:${pair.color1};"></div>
+                  <div class="color-sample" style="background-color:${pair.color2};"></div>
+                  <div style="font-size:.8rem;">Distance: ${pair.distance.toFixed(0)} (too close!)</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="detail-subsection">
+          <h4>💡 Colorblind Accessibility Checklist</h4>
+          <div class="detail-content">
+            <strong>Color & Contrast:</strong><br>
+            • Use high contrast between foreground and background<br>
+            • Avoid pure red + pure green combinations<br>
+            • Include brightness/lightness differences between colors<br>
+            • Test with online colorblind simulators<br><br>
+            <strong>Font & Readability:</strong><br>
+            • Minimum 18pt for body text (24pt+ for headers)<br>
+            • Use sans-serif: Arial, Helvetica, Roboto<br>
+            • Avoid italics—use bold for emphasis<br>
+            • Ensure 4.5:1 contrast ratio<br><br>
+            <strong>Charts & Data Visualization:</strong><br>
+            • Add patterns: diagonal lines, dots, hashes<br>
+            • Label data directly (don't rely on legend color)<br>
+            • Use symbols/shapes in addition to colors<br>
+            • Black & white patterns as fallback
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return report;
+}
+
+const zonePptx = document.getElementById('uploadZonePptx');
+const inputPptx = document.getElementById('fileInputPptx');
+
+['dragover', 'dragenter'].forEach(e => 
+  zonePptx.addEventListener(e, ev => { ev.preventDefault(); zonePptx.classList.add('over'); })
+);
+['dragleave', 'dragend', 'drop'].forEach(e =>
+  zonePptx.addEventListener(e, ev => { ev.preventDefault(); zonePptx.classList.remove('over'); })
+);
+
+zonePptx.addEventListener('drop', ev => {
+  if (ev.dataTransfer.files[0]) handleUploadPptx(ev.dataTransfer.files[0]);
 });
 
-document.getElementById('btnDownloadPptx').addEventListener('click',()=>{
-  if(!processedBlob)return;
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(processedBlob);
-  a.download=`${originalFilename.replace(/\.pptx$/i,'')}-accessible.pptx`;
-  a.click();
+inputPptx.addEventListener('change', () => {
+  if (inputPptx.files[0]) handleUploadPptx(inputPptx.files[0]);
 });
 
-document.getElementById('btnDownloadSim').addEventListener('click',()=>{
-  if(!simulatedBlob)return;
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(simulatedBlob);
-  a.download=`${originalFilename.replace(/\.pptx$/i,'')}-protanopia-sim.pptx`;
-  a.click();
-});
+async function handleUploadPptx(file) {
+  if (!file.name.toLowerCase().endsWith('.pptx')) {
+    showToast('⚠ Please upload a .pptx file');
+    return;
+  }
 
-function showLoading(msg){document.getElementById('loadingMsg').textContent=msg;document.getElementById('loading').style.display='block';}
-function hideLoading(){document.getElementById('loading').style.display='none';}
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+  pptxAnalysis.filename = file.name;
+  showLoading('Analyzing presentation...');
+  
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const analysis = await analyzePptx(arrayBuffer);
+    
+    document.getElementById('uploadZonePptx').style.display = 'none';
+    document.getElementById('analysisPanelPptx').style.display = 'block';
+    document.getElementById('analysisPptxContent').innerHTML = generateAnalysisReport(analysis);
+    
+    document.getElementById('analysisPanelPptx').scrollIntoView({ behavior: 'smooth' });
+    showToast('✓ Analysis complete');
+  } catch (err) {
+    showToast('⚠ ' + err.message);
+  }
+  
+  hideLoading();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════════════════
+function showLoading(msg) {
+  document.getElementById('loadingMsg').textContent = msg;
+  document.getElementById('loading').style.display = 'block';
+}
+
+function hideLoading() {
+  document.getElementById('loading').style.display = 'none';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
 </script>
 </body>
 </html>
